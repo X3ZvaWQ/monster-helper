@@ -20,7 +20,7 @@
                     </div>
                 </div>
                 <div class="m-role-title">
-                    <img class="u-school-icon" :src="getSchoolIcon(role.schoolId!)" />
+                    <img class="u-school-icon" :src="schoolIconLink(role.schoolId!)" />
                     <span class="u-role-name">{{ role.name }}</span>
                     <div class="u-value">
                         <span class="u-spirit">精力：{{ spiritEndurance.spirit }}</span>
@@ -34,7 +34,7 @@
             <div class="m-role-detail-content">
                 <div class="m-left">
                     <p class="m-section-title">
-                        <span>角色技能</span>
+                        <n-text>角色技能</n-text>
                         <n-button text class="u-edit" @click="onUpdateSkills" size="small">
                             <template #icon>
                                 <i-ant-design:edit-outlined />
@@ -44,7 +44,7 @@
                     <skill-list v-if="role?.skills?.length" class="m-role-skills" :skills="role.skills"></skill-list>
                     <div v-else class="m-empty">暂未记录技能，点击上方按钮更新技能列表</div>
                     <p class="m-section-title">
-                        <span>角色背包</span>
+                        <n-text>角色背包</n-text>
                         <n-button text class="u-edit" size="small">
                             <template #icon>
                                 <i-ant-design:edit-outlined />
@@ -58,10 +58,10 @@
                     </div>
                 </div>
                 <div class="m-right">
-                    <p class="m-section-title">可传功技能</p>
+                    <n-text class="m-section-title">可传功技能</n-text>
                     <div class="m-empty">暂无可传功技能（功能还没做~）</div>
-                    <p class="m-section-title">本周进度</p>
-                    <div class="m-empty">本周暂无进度（功能还没做~）</div>
+                    <n-text class="m-section-title">本周进度</n-text>
+                    <div class="m-empty">本周暂无进度</div>
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { useMessage } from "naive-ui";
 import { ref, computed } from "vue";
-import { getSchoolIcon } from "../../utils/game";
+import { schoolIconLink } from "../../utils/game";
 import { useRoleStore } from "../../store/role";
 import SkillParse from "./SkillParse.vue";
 import SkillList from "./SkillList.vue";
@@ -201,7 +201,6 @@ defineExpose({
     .m-section-title {
         font-weight: bold;
         font-size: 0.9rem;
-        color: #777;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -217,8 +216,8 @@ defineExpose({
         font-size: 12px;
         line-height: 1.8;
         color: #aeaeae;
-        border: 1px solid #e8e8e8;
-        border-radius: 4px;
+        border: var(--n-border);
+        border-radius: var(--n-border-radius);
         padding: 12px 0;
     }
     .m-role-skills {

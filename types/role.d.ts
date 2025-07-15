@@ -9,6 +9,11 @@ interface Role {
     gender: Gender;
     skills: RoleSkill[];
     inventory: InventoryItem[];
+    // 角色备注
+    remark?: string;
+    // 本周进度
+    cd?: boolean;
+    cdRemark?: string;
 }
 
 interface RoleSkill {

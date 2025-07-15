@@ -10,7 +10,6 @@
                 v-for="(account, index) in roleList"
                 :key="index"
                 size="small"
-                :bordered="false"
             >
                 <template #header>
                     <div class="m-account-title">{{ account.account }}</div>
@@ -24,7 +23,7 @@
                     >
                         <img
                             class="u-school-icon"
-                            :src="getSchoolIcon(role.schoolId!)"
+                            :src="schoolIconLink(role.schoolId!)"
                             alt=""
                         />
                         <span class="u-role-name">{{ role.name }}</span>
@@ -50,7 +49,7 @@ import RoleCreateDialog from "../components/role/RoleCreateDialog.vue";
 import RoleDetailDialog from "../components/role/RoleDetailDialog.vue";
 import { useRoleStore } from "../store/role";
 import { getSearchKey } from "../utils/search";
-import { getSchoolName, getSchoolIcon } from "../utils/game";
+import { getSchoolName, schoolIconLink } from "../utils/game";
 
 const createDialog = ref<InstanceType<typeof RoleCreateDialog> | null>(null);
 const onCreateRole = () => {
@@ -117,7 +116,6 @@ const roleList = computed(() => {
 
     .m-account-item {
         width: 300px;
-        border: 1px solid #e8e8e8;
     }
 
     .m-role-list {
@@ -135,7 +133,7 @@ const roleList = computed(() => {
         border-radius: 4px;
         transition: all 0.15s ease;
         &:hover {
-            background-color: #f5f5f5;
+            background-color: --n-color-fill-1;
         }
 
         .u-school-icon {

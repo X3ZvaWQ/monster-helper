@@ -18,13 +18,16 @@
 </template>
 
 <script setup lang="ts">
+import { skillLevelLabel } from "@/assets/data/game";
 import StatSetting from "@/components/stat/Setting.vue";
 import { useGameStore } from "@/store/game";
 import { useRoleStore } from "@/store/role";
 import { useSettingStore } from "@/store/setting";
 import { getSchoolName, iconLink } from "@/utils/game";
+import { sumBy } from "lodash";
 import { DataTableColumns } from "naive-ui";
 import { TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
+import { CSSProperties } from "vue";
 
 const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) => {
     const settingColumn = useSettingStore().stat.columns.find(
@@ -37,12 +40,12 @@ const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) =>
 
 const columns = computed(() => {
     const setting = useSettingStore().stat.columns;
-    const result: DataTableColumns = [];
+    const result: DataTableColumns<StatTableDataRow> = [];
 
-    const getColumnKey = (item: StatSetting) => {
+    const getColumnKey = (item: StatSetting): keyof StatTableDataRow => {
         if (item.type === "basic") return item.key;
         if (item.type === "skill") return `skill-${item.skillId}`;
-        return "";
+        return "default";
     };
     const getColumnLabel = (item: StatSetting) => {
         if (item.label) return item.label;
@@ -52,25 +55,24 @@ const columns = computed(() => {
             return skill ? skill.name : `技能-${item.skillId}`;
         }
     };
-    const getTitleRender = (item: StatSetting) => {
-        if (item.type === "basic") {
-            return () => h("div", { class: "u-basic" }, getColumnLabel(item));
+    const getStyle = (item: StatSetting): CSSProperties => {
+        const style: CSSProperties = {};
+        if (item.style?.fontSize) {
+            style.fontSize = `${item.style.fontSize}px`;
+        } else if (useSettingStore().stat.style.fontSize) {
+            style.fontSize = `${useSettingStore().stat.style.fontSize}px`;
         }
-        if (item.type === "skill") {
-            return () =>
-                h(resolveComponent("n-text"), { style: item.style || {} }, { default: () => getColumnLabel(item) });
+        if (item.style?.color) {
+            style.color = item.style.color;
+        } else if (useSettingStore().stat.style.color) {
+            style.color = useSettingStore().stat.style.color!;
         }
-        return () => "";
-    };
-    const getColumnRender = (item: StatSetting) => {
-        if (item.type === "basic") {
-            return (row: any) => h("div", { class: "u-basic" }, row[getColumnKey(item)]);
+        if (item.style?.fontWeight) {
+            style.fontWeight = item.style.fontWeight;
+        } else if (useSettingStore().stat.style.fontWeight) {
+            style.fontWeight = useSettingStore().stat.style.fontWeight!;
         }
-        if (item.type === "skill") {
-            return (row: any) =>
-                h(resolveComponent("n-text"), { style: item.style || {} }, { default: () => row[getColumnKey(item)] });
-        }
-        return () => "";
+        return style;
     };
 
     for (const item of setting) {
@@ -79,17 +81,39 @@ const columns = computed(() => {
         const column = {
             key,
             resizable: true,
+            sorter: "default",
             minWidth: 1,
+            ellipsis: true,
             title() {
-                const divContent: any[] = [getColumnLabel(item)];
-                if (item.type === "skill" && item.withIcon) {
-                    divContent.unshift(
-                        h(resolveComponent("n-image"), {
-                            previewDisabled: true,
-                            src: iconLink(useGameStore().getSkillById(item.skillId)?.icon || 0),
-                            style: "width: 20px; height: 20px",
-                        })
+                const divContent: any[] = [];
+                if (item.type === "basic") {
+                    divContent.push(
+                        h(
+                            resolveComponent("n-text"),
+                            { style: getStyle(item) },
+                            { default: () => getColumnLabel(item) }
+                        )
                     );
+                }
+                if (item.type === "skill") {
+                    if (item.withIcon) {
+                        divContent.push(
+                            h(resolveComponent("n-image"), {
+                                previewDisabled: true,
+                                src: iconLink(useGameStore().getSkillById(item.skillId)?.icon || 0),
+                                style: "width: 20px; height: 20px",
+                            })
+                        );
+                    }
+                    if (item.withLabel) {
+                        divContent.push(
+                            h(
+                                resolveComponent("n-text"),
+                                { style: getStyle(item) },
+                                { default: () => getColumnLabel(item) }
+                            )
+                        );
+                    }
                 }
                 return h(
                     "div",
@@ -99,17 +123,42 @@ const columns = computed(() => {
                     divContent
                 );
             },
-            render(row) {
+            render(row: StatTableDataRow) {
+                const divContent: any[] = [];
+                if (item.type === "basic") {
+                    if (item.key === "role" && item.withSchoolIcon) {
+                        divContent.push(
+                            h(resolveComponent("n-image"), {
+                                previewDisabled: true,
+                                src: iconLink(row.schoolId, "school"),
+                                style: "width: 20px; height: 20px",
+                            })
+                        );
+                    }
+                    divContent.push(
+                        h(resolveComponent("n-text"), { style: getStyle(item) }, { default: () => row[key] })
+                    );
+                } else if (item.type === "skill") {
+                    const skillLevel = row[`skill-${item.skillId}`] || 0;
+                    divContent.push(
+                        h(
+                            resolveComponent("n-text"),
+                            { style: getStyle(item) },
+                            { default: () => (item.level === "levelLabel" ? skillLevelLabel[skillLevel] : skillLevel) }
+                        )
+                    );
+                }
                 return h(
-                    resolveComponent("n-text"),
+                    resolveComponent("n-flex"),
                     {
-                        style: item.style || {},
+                        size: 2,
+                        align: "center",
                     },
-                    { default: () => row[key] }
+                    { default: () => divContent }
                 );
             },
-        } as TableColumn;
-        if (item.width) column.width = item.width;
+        } as TableColumn<StatTableDataRow>;
+        column.width = item.width || 100;
         if (item.fixed) column.fixed = item.fixed;
         result.push(column);
     }
@@ -121,14 +170,19 @@ const data = computed(() => {
     const result: any[] = [];
     for (const role of roles) {
         const { spirit, endurance } = useRoleStore().calcSpiritAndEndurance(role);
-        const row: any = {
+        const row: StatTableDataRow = {
             account: role.account,
             server: role.server,
             role: role.name,
             school: getSchoolName(role.schoolId!),
+            schoolId: Number(role.schoolId),
             gender: role.gender,
             spirit,
             endurance,
+            cd: role.cd || false,
+            cdRemark: role.cdRemark || "",
+            remark: role.remark || "",
+            default: "-",
         };
         for (const column of useSettingStore().stat.columns) {
             const levelMap = useRoleStore().getSkillLevelMap(role);
@@ -147,19 +201,9 @@ const openSetting = () => {
     settingPanel.value?.open();
 };
 
-const tableWidth = ref<number>(0);
-const pageEl = ref<HTMLElement | null>(null);
-// 监听页面宽度变化
-onMounted(() => {
-    const resizeObserver = new ResizeObserver(() => {
-        if (pageEl.value) {
-            tableWidth.value = pageEl.value.clientWidth - 2;
-        }
-    });
-    if (pageEl.value) {
-        resizeObserver.observe(pageEl.value);
-        tableWidth.value = pageEl.value.clientWidth - 2;
-    }
+const tableWidth = computed(() => {
+    const setting = useSettingStore().stat.columns;
+    return sumBy(setting, (item) => item.width || 100);
 });
 </script>
 
@@ -171,6 +215,13 @@ onMounted(() => {
     gap: 10px;
     height: 100%;
 
+    .m-data {
+        width: 100%;
+        flex-shrink: 0;
+        flex-grow: 1;
+        overflow-x: auto;
+    }
+
     .m-toolbar {
         display: flex;
         justify-content: flex-end;
@@ -180,14 +231,19 @@ onMounted(() => {
         display: flex;
         align-items: center;
         gap: 8px;
-        .n-image {
+        .n-image,
+        img {
             flex-shrink: 0;
+            width: 20px;
+            height: 20px;
         }
     }
-
-    .n-data-table-th,
-    .n-data-table-td {
-        width: auto !important;
+    .n-data-table-th__ellipsis {
+        max-width: 100% !important;
     }
+    // .n-data-table-th,
+    // .n-data-table-td {
+    //     width: auto !important;
+    // }
 }
 </style>

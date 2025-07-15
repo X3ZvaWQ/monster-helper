@@ -1,6 +1,6 @@
 interface BaseStatSetting {
     type: "basic" | "skill";
-    width?: number | string;
+    width?: number;
     fixed?: "left" | "right";
     style?: {
         color?: string;
@@ -9,17 +9,19 @@ interface BaseStatSetting {
     };
 }
 
-interface BasicStatSetting extends BaseStatSetting {
-    type: "basic";
-    label: string;
-    key: string;
-}
+type BasicKey = "account" | "server" | "school" | "gender" | "spirit" | "endurance" | "role";
 
 interface BasicRoleStatSetting extends BaseStatSetting {
     type: "basic";
     key: "role";
     label: string;
     withSchoolIcon: boolean;
+}
+
+interface BasicStatSetting extends BaseStatSetting {
+    type: "basic";
+    key: "account" | "server" | "school" | "gender" | "spirit" | "endurance";
+    label: string;
 }
 
 interface SkillStatSetting extends BaseStatSetting {
@@ -31,4 +33,20 @@ interface SkillStatSetting extends BaseStatSetting {
     level?: "number" | "levelLabel";
 }
 
-type StatSetting = BasicStatSetting | BasicRoleStatSetting | SkillStatSetting;
+type StatSetting = BasicRoleStatSetting | BasicStatSetting | SkillStatSetting;
+
+interface StatTableDataRow {
+    account: string;
+    server: string;
+    role: string;
+    school: string;
+    schoolId: number;
+    gender: string;
+    spirit: number;
+    endurance: number;
+    cd: boolean;
+    cdRemark: string;
+    remark: string;
+    [key: `skill-${number}`]: number;
+    default: "-";
+}

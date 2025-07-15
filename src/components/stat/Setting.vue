@@ -28,16 +28,8 @@
                             :key="index"
                         >
                             <i-ooui:draggable class="drag-handle" />
-                            <i-mdi:server-outline v-if="column.type === 'basic' && column.key === 'server'" />
-                            <i-mdi:account-outline v-if="column.type === 'basic' && column.key === 'account'" />
-                            <i-bx:game v-if="column.type === 'basic' && column.key === 'role'" />
-                            <i-material-symbols-light:school
-                                v-if="column.type === 'basic' && column.key === 'school'"
-                            />
-                            <i-mdi:gender-male v-if="column.type === 'basic' && column.key === 'gender'" />
-                            <span v-if="column.type === 'basic' && column.key === 'spirit'">精</span>
-                            <span v-if="column.type === 'basic' && column.key === 'endurance'">耐</span>
                             <template class="u-basic" v-if="column.type === 'basic'">
+                                <i-ic:baseline-beach-access />
                                 <div class="u-setting-name">{{ column.label }}</div>
                             </template>
                             <template v-if="column.type === 'skill'">
@@ -49,16 +41,133 @@
                                 </n-image>
                                 <div class="u-setting-name">{{ useGameStore().getSkillById(column.skillId).name }}</div>
                             </template>
-                            <n-button text type="primary">
-                                <i-material-symbols:settings-rounded />
-                            </n-button>
+                            <n-popover trigger="click">
+                                <template #trigger>
+                                    <n-button text type="primary">
+                                        <i-material-symbols:settings-rounded />
+                                    </n-button>
+                                </template>
+                                <div class="m-stat-item-setting">
+                                    <n-flex justify="space-between" align="center">
+                                        <div class="u-item-label">文字样式</div>
+                                        <div class="u-item-value">全局样式（暂不支持修改）</div>
+                                    </n-flex>
+                                    <n-flex justify="space-between" align="center" v-if="column.type === 'basic'">
+                                        <div class="u-item-label">冻结列</div>
+                                        <div class="u-item-value">
+                                            <n-switch
+                                                v-model:value="column.fixed"
+                                                :checked-value="'left'"
+                                                :default-value="undefined"
+                                                size="small"
+                                            />
+                                        </div>
+                                    </n-flex>
+                                    <n-flex justify="space-between" align="center" v-if="column.type === 'skill'">
+                                        <div class="u-item-label">显示图标</div>
+                                        <div class="u-item-value">
+                                            <n-switch v-model:value="column.withIcon" size="small" />
+                                        </div>
+                                    </n-flex>
+                                    <n-flex
+                                        justify="space-between"
+                                        align="center"
+                                        v-if="column.type === 'basic' && column.key === 'role'"
+                                    >
+                                        <div class="u-item-label">显示门派图标</div>
+                                        <div class="u-item-value">
+                                            <n-switch v-model:value="(column as any).withSchoolIcon" size="small" />
+                                        </div>
+                                    </n-flex>
+                                    <n-flex justify="space-between" align="center" v-if="column.type === 'skill'">
+                                        <div class="u-item-label">显示技能名</div>
+                                        <div class="u-item-value">
+                                            <n-switch v-model:value="column.withLabel" size="small" />
+                                        </div>
+                                    </n-flex>
+                                    <n-flex justify="space-between" align="center">
+                                        <div class="u-item-label">显示名称</div>
+                                        <div class="u-item-value">
+                                            <n-input
+                                                v-model:value="column.label"
+                                                size="small"
+                                                :disabled="column.type === 'skill' && !column.withLabel"
+                                            />
+                                        </div>
+                                    </n-flex>
+                                    <n-flex justify="space-between" align="center" v-if="column.type === 'skill'">
+                                        <div class="u-item-label">重数显示</div>
+                                        <div class="u-item-value">
+                                            <n-radio-group v-model:value="column.level">
+                                                <n-radio-button value="number" label="数字" />
+                                                <n-radio-button value="levelLabel" label="中文" />
+                                            </n-radio-group>
+                                        </div>
+                                    </n-flex>
+                                </div>
+                            </n-popover>
+
                             <n-button text type="warning" @click="removeColumn(column)">
                                 <i-material-symbols:delete-rounded />
                             </n-button>
                         </div>
                     </vue-draggable>
                 </n-tab-pane>
-                <n-tab-pane name="global" tab="全局配置"> ... </n-tab-pane>
+                <n-tab-pane name="global" tab="全局配置">
+                    <n-h6 prefix="bar" align-text> 字体样式 </n-h6>
+                    <n-flex align="center" justify="center">
+                        <n-text :style="previewStyle">应该会是这样~</n-text>
+                    </n-flex>
+                    <n-flex justify="space-between" align="center">
+                        <div class="u-item-label">文字大小</div>
+                        <div class="u-item-value grow">
+                            <n-flex align="center" :wrap="false">
+                                <n-slider
+                                    v-model:value="useSettingStore().stat.style.fontSize!"
+                                    :step="1"
+                                    :min="8"
+                                    :max="30"
+                                />
+                                <n-button type="primary" text @click="useSettingStore().stat.style.fontSize = null">
+                                    <template #icon>
+                                        <i-ic:round-clear />
+                                    </template>
+                                </n-button>
+                            </n-flex>
+                        </div>
+                    </n-flex>
+                    <n-flex justify="space-between" align="center">
+                        <div class="u-item-label">文字粗细</div>
+                        <div class="u-item-value grow">
+                            <n-flex align="center" :wrap="false">
+                                <n-slider
+                                    v-model:value="useSettingStore().stat.style.fontWeight!"
+                                    :step="100"
+                                    :min="100"
+                                    :max="900"
+                                />
+                                <n-button type="primary" text @click="useSettingStore().stat.style.fontWeight = null">
+                                    <template #icon>
+                                        <i-ic:round-clear />
+                                    </template>
+                                </n-button>
+                            </n-flex>
+                        </div>
+                    </n-flex>
+                    <n-flex justify="space-between" align="center">
+                        <div class="u-item-label">文字颜色</div>
+                        <div class="u-item-value grow">
+                            <n-flex align="center" :wrap="false">
+                                <n-color-picker v-model:value="useSettingStore().stat.style.color!" size="small" />
+                                <n-button type="primary" text @click="useSettingStore().stat.style.color = null">
+                                    <template #icon>
+                                        <i-ic:round-clear />
+                                    </template>
+                                </n-button>
+                            </n-flex>
+                        </div>
+                    </n-flex>
+                </n-tab-pane>
             </n-tabs>
         </n-drawer-content>
     </n-drawer>
@@ -70,6 +179,7 @@ import SkillSelect from "../common/SkillSelect.vue";
 import { useGameStore } from "@/store/game";
 import { VueDraggable } from "vue-draggable-plus";
 import { iconLink } from "@/utils/game";
+import type { CSSProperties } from "vue";
 
 // 基础信息选择项
 const basicSelects = ref([
@@ -80,6 +190,9 @@ const basicSelects = ref([
     { label: "性别", value: "gender", check: true },
     { label: "精神", value: "spirit", check: true },
     { label: "耐力", value: "endurance", check: true },
+    { label: "进度", value: "cd", check: true },
+    { label: "进度备注", value: "cdRemark", check: true },
+    { label: "备注", value: "remark", check: true },
 ]);
 // 技能等级选择
 const skillLevelSelects = ref<number[]>([]);
@@ -111,10 +224,10 @@ const onBasicSelectToggle = (item: { label: string; value: string; check: boolea
     } else {
         // 如果选中，添加对应列
         useSettingStore().stat.columns = [
-            ...useSettingStore().stat.columns,
+            ...(useSettingStore().stat.columns as any),
             {
                 type: "basic",
-                key: item.value,
+                key: item.value as BasicKey,
                 label: item.label,
             },
         ];
@@ -133,6 +246,7 @@ watch(skillLevelSelects, () => {
                 type: "skill",
                 skillId,
                 withIcon: true,
+                width: 64,
                 label: useGameStore().getSkillById(skillId).name.slice(-2),
             });
         }
@@ -159,6 +273,16 @@ const removeColumn = (column: StatSetting) => {
     }
 };
 
+// 全局配置
+const previewStyle = computed(() => {
+    const style: CSSProperties = {};
+    const config = useSettingStore().stat.style;
+    if (config.color) style.color = config.color;
+    if (config.fontSize) style.fontSize = `${config.fontSize}px`;
+    if (config.fontWeight) style.fontWeight = config.fontWeight;
+    return style;
+});
+
 const visible = ref(false);
 const open = () => {
     visible.value = true;
@@ -167,6 +291,11 @@ defineExpose({ open });
 </script>
 
 <style lang="less">
+.m-stat-item-setting {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 .m-stat-setting {
     display: flex;
     flex-direction: column;

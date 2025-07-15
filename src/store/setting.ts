@@ -1,8 +1,6 @@
 import { defaultStatColumns } from "@/assets/data/setting";
 import { cloneDeep } from "lodash";
 
-
-
 export const useSettingStore = defineStore("setting", {
     state: () => ({
         theme: "light" as "light" | "dark" | "os" | null,
@@ -11,6 +9,11 @@ export const useSettingStore = defineStore("setting", {
         },
         stat: {
             columns: cloneDeep(defaultStatColumns),
+            style: {
+                color: null as string | null,
+                fontSize: null as number | null,
+                fontWeight: null as number | null,
+            },
         },
     }),
     actions: {
