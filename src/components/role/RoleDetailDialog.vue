@@ -10,18 +10,36 @@
         <div class="m-role-detail">
             <div class="m-role-info" v-if="role">
                 <div class="m-role-account">
-                    <div>{{ role.account }}</div>
-                    <div class="m-role-meta">
-                        <span>{{ role.server }}</span>
-                        <span>
+                    <n-flex align="center" class="w-full">
+                        <n-text>{{ role.account }}</n-text>
+                        <n-text>{{ role.server }}</n-text>
+                        <n-text>
                             <i-material-symbols:male-rounded v-if="role.gender === 'male'" />
                             <i-material-symbols:female-rounded v-else />
-                        </span>
-                    </div>
+                        </n-text>
+                        <n-flex class="grow" justify="flex-end">
+                            <n-text>{{ role.remark }}</n-text>
+                            <n-popover trigger="click">
+                                <template #trigger>
+                                    <n-button text type="primary">
+                                        <template #icon>
+                                            <i-material-symbols:edit-rounded />
+                                        </template>
+                                    </n-button>
+                                </template>
+                                <n-input-group>
+                                    <n-input v-model:value="remarkInput" @keyup.enter="role.remark = remarkInput" />
+                                    <n-button type="primary" ghost @click="role.remark = remarkInput">
+                                        更新！
+                                    </n-button>
+                                </n-input-group>
+                            </n-popover>
+                        </n-flex>
+                    </n-flex>
                 </div>
                 <div class="m-role-title">
                     <img class="u-school-icon" :src="schoolIconLink(role.schoolId!)" />
-                    <span class="u-role-name">{{ role.name }}</span>
+                    <n-text class="u-role-name">{{ role.name }}</n-text>
                     <div class="u-value">
                         <span class="u-spirit">精力：{{ spiritEndurance.spirit }}</span>
                         <span class="u-endurance">耐力：{{ spiritEndurance.endurance }}</span>
@@ -58,8 +76,6 @@
                     </div>
                 </div>
                 <div class="m-right">
-                    <n-text class="m-section-title">可传功技能</n-text>
-                    <div class="m-empty">暂无可传功技能（功能还没做~）</div>
                     <n-text class="m-section-title">当前进度</n-text>
                     <n-flex vertical>
                         <n-flex justify="space-between">
@@ -107,6 +123,9 @@
                             </n-flex>
                         </n-flex>
                     </n-flex>
+
+                    <n-text class="m-section-title">可传功技能</n-text>
+                    <div class="m-empty">暂无可传功技能（功能开发中~）</div>
                 </div>
             </div>
         </div>
@@ -186,6 +205,9 @@ const onUpdateRoleCdRemark = () => {
     cdRemarkInput.value = ""; // 清空输入框
 };
 
+// 角色备注修改
+const remarkInput = ref<string>("");
+
 defineExpose({
     open,
 });
@@ -217,12 +239,6 @@ defineExpose({
         color: #888;
         display: flex;
         justify-content: space-between;
-    }
-    .m-role-meta {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        align-items: center;
     }
     .m-role-title {
         display: flex;
