@@ -1,7 +1,15 @@
 <template>
     <div class="p-stat" ref="pageEl">
         <div class="m-toolbar">
-            <n-button @click="openSetting" type="primary">表格配置</n-button>
+            <n-flex>
+                <n-button @click="openSetting" type="primary">表格配置</n-button>
+                <n-popconfirm @positive-click="useRoleStore().resetCd()">
+                    <template #trigger>
+                        <n-button type="warning">新的一周</n-button>
+                    </template>
+                    该操作会重置所有角色的百战CD和传功/被传功计数，周一的时候点一点就好，不可撤销哦~
+                </n-popconfirm>
+            </n-flex>
         </div>
         <div class="m-data">
             <n-data-table
@@ -184,7 +192,7 @@ const columns = computed(() => {
                     {
                         size: 2,
                         align: "center",
-                        wrap: false
+                        wrap: false,
                     },
                     { default: () => divContent }
                 );
@@ -274,11 +282,9 @@ const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
         }
     }
     .n-data-table {
-        
         .u-role-name {
             line-height: 1.6;
         }
-        
     }
     .n-data-table-th__ellipsis {
         max-width: 100% !important;

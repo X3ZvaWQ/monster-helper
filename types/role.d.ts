@@ -14,6 +14,9 @@ interface Role {
     // 本周进度
     cd?: boolean;
     cdRemark?: string;
+    // 传功计数
+    teachCount?: number;
+    taughtCount?: number;
 }
 
 interface RoleSkill {

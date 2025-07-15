@@ -1,15 +1,16 @@
 <template>
     <div class="p-role">
-        <div class="m-toolbar">
-            <n-input v-model:value="search" placeholder="搜索角色" clearable />
+        <n-flex class="m-toolbar" :wrap="false">
+            <n-input class="grow" v-model:value="search" placeholder="搜索角色" clearable />
             <n-button @click="onCreateRole" type="primary">创建角色</n-button>
-            <n-popconfirm @positive-click="onResetCd">
+            <n-popconfirm @positive-click="useRoleStore().resetCd()">
                 <template #trigger>
-                    <n-button type="warning">重置CD</n-button>
+                    <n-button type="warning">新的一周</n-button>
                 </template>
-                该操作会重置所有角色的百战CD，适用于周一的时候批量重置，不可撤销哦~
+                该操作会重置所有角色的百战CD和传功/被传功计数，周一的时候点一点就好，不可撤销哦~
             </n-popconfirm>
-        </div>
+        </n-flex>
+
         <div class="m-account-list" v-if="roleList.length">
             <n-card class="m-account-item" v-for="(account, index) in roleList" :key="index" size="small">
                 <template #header>
@@ -75,13 +76,6 @@ const roleList = computed(() => {
         }))
         .value();
 });
-
-const onResetCd = () => {
-    useRoleStore().roles.forEach((role) => {
-        role.cd = false;
-        role.cdRemark = "";
-    });
-};
 </script>
 
 <style lang="less" scoped>
@@ -94,7 +88,6 @@ const onResetCd = () => {
     .m-toolbar {
         display: flex;
         align-items: center;
-        gap: 16px;
     }
 
     .m-empty {

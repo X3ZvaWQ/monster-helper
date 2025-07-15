@@ -17,24 +17,7 @@
                             <i-material-symbols:male-rounded v-if="role.gender === 'male'" />
                             <i-material-symbols:female-rounded v-else />
                         </n-text>
-                        <n-flex class="grow" justify="flex-end">
-                            <n-text>{{ role.remark }}</n-text>
-                            <n-popover trigger="click">
-                                <template #trigger>
-                                    <n-button text type="primary">
-                                        <template #icon>
-                                            <i-material-symbols:edit-rounded />
-                                        </template>
-                                    </n-button>
-                                </template>
-                                <n-input-group>
-                                    <n-input v-model:value="remarkInput" @keyup.enter="role.remark = remarkInput" />
-                                    <n-button type="primary" ghost @click="role.remark = remarkInput">
-                                        更新！
-                                    </n-button>
-                                </n-input-group>
-                            </n-popover>
-                        </n-flex>
+                        <editable-value justify="flex-end" :value="role.remark!" @update:value="role.remark = $event" />
                     </n-flex>
                 </div>
                 <div class="m-role-title">
@@ -79,7 +62,7 @@
                     <n-text class="m-section-title">当前进度</n-text>
                     <n-flex vertical>
                         <n-flex justify="space-between">
-                            <span>当前：</span>
+                            <span class="u-label">当前</span>
                             <n-flex v-if="role.cd">
                                 <n-text>已经打咯~</n-text>
                                 <n-tooltip>
@@ -104,28 +87,47 @@
                             </n-flex>
                         </n-flex>
                         <n-flex justify="space-between">
-                            <span>备注：</span>
-                            <n-flex>
-                                <n-text>{{ role.cdRemark }}</n-text>
-                                <n-popover trigger="click">
-                                    <template #trigger>
-                                        <n-button text type="primary">
-                                            <template #icon>
-                                                <i-material-symbols:edit-rounded />
-                                            </template>
-                                        </n-button>
-                                    </template>
-                                    <n-input-group>
-                                        <n-input v-model:value="cdRemarkInput" @keyup.enter="onUpdateRoleCdRemark" />
-                                        <n-button type="primary" ghost @click="onUpdateRoleCdRemark"> 更新！ </n-button>
-                                    </n-input-group>
-                                </n-popover>
-                            </n-flex>
+                            <span class="u-label">备注</span>
+                            <editable-value
+                                justify="flex-end"
+                                :value="role.cdRemark!"
+                                @update:value="role.cdRemark = $event"
+                            />
                         </n-flex>
                     </n-flex>
-
-                    <n-text class="m-section-title">可传功技能</n-text>
-                    <div class="m-empty">暂无可传功技能（功能开发中~）</div>
+                    <n-text class="m-section-title">传功</n-text>
+                    <n-flex vertical>
+                        <n-flex justify="space-between">
+                            <span class="u-label">剩余传功计数</span>
+                            <editable-value
+                                type="number"
+                                justify="flex-end"
+                                :value="role.teachCount ?? 20"
+                                @update:value="role.teachCount = $event"
+                                :min="0"
+                                :max="20"
+                            >
+                                <template #default="{ value }">
+                                    <n-text>{{ value }} / 20</n-text>
+                                </template>
+                            </editable-value>
+                        </n-flex>
+                        <n-flex justify="space-between">
+                            <span class="u-label">已被传功计数</span>
+                            <editable-value
+                                type="number"
+                                justify="flex-end"
+                                :value="role.taughtCount ?? 10"
+                                @update:value="role.taughtCount = $event"
+                                :min="0"
+                                :max="10"
+                            >
+                                <template #default="{ value }">
+                                    <n-text>{{ value }} / 10</n-text>
+                                </template>
+                            </editable-value>
+                        </n-flex>
+                    </n-flex>
                 </div>
             </div>
         </div>
@@ -154,6 +156,7 @@ import SkillParse from "./SkillParse.vue";
 import SkillList from "./SkillList.vue";
 import { cloneDeep } from "lodash";
 import { defaultRole } from "@/assets/data/role";
+import EditableValue from "../common/EditableValue.vue";
 
 // 更新技能列表逻辑
 const skillParse = ref<InstanceType<typeof SkillParse> | null>(null);
@@ -195,18 +198,6 @@ const message = useMessage();
 const onPlanValue = () => {
     message.info("精耐提升规划功能正在开发中，敬请期待~");
 };
-
-// CD 更新相关事件
-const cdRemarkInput = ref<string>("");
-const onUpdateRoleCdRemark = () => {
-    if (!role.value) return;
-    useRoleStore().updateRole(role.value.id!, { cdRemark: cdRemarkInput.value });
-    message.success("CD备注已更新");
-    cdRemarkInput.value = ""; // 清空输入框
-};
-
-// 角色备注修改
-const remarkInput = ref<string>("");
 
 defineExpose({
     open,
@@ -313,6 +304,10 @@ defineExpose({
     }
     .m-right {
         flex-grow: 1;
+
+        .u-label {
+            opacity: 0.7;
+        }
     }
     .m-actions {
         width: 100%;

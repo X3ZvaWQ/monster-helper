@@ -13,6 +13,14 @@ export const useRoleStore = defineStore("role", {
         roles: [] as Role[],
     }),
     actions: {
+        resetCd() {
+            this.roles.forEach((role) => {
+                role.cd = false; // 重置百战CD
+                role.cdRemark = ""; // 重置百战CD备注
+                role.teachCount = 20; // 重置传功计数
+                role.taughtCount = 0; // 重置被传功计数
+            });
+        },
         deleteRole(id: string) {
             const index = this.roles.findIndex((r) => r.id === id);
             if (index === -1) return;
