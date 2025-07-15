@@ -3,6 +3,12 @@
         <div class="m-toolbar">
             <n-input v-model:value="search" placeholder="搜索角色" clearable />
             <n-button @click="onCreateRole" type="primary">创建角色</n-button>
+            <n-popconfirm @positive-click="onResetCd">
+                <template #trigger>
+                    <n-button type="warning">重置CD</n-button>
+                </template>
+                该操作会重置所有角色的百战CD，适用于周一的时候批量重置，不可撤销哦~
+            </n-popconfirm>
         </div>
         <div class="m-account-list" v-if="roleList.length">
             <n-card class="m-account-item" v-for="(account, index) in roleList" :key="index" size="small">
@@ -69,6 +75,13 @@ const roleList = computed(() => {
         }))
         .value();
 });
+
+const onResetCd = () => {
+    useRoleStore().roles.forEach((role) => {
+        role.cd = false;
+        role.cdRemark = "";
+    });
+};
 </script>
 
 <style lang="less" scoped>
