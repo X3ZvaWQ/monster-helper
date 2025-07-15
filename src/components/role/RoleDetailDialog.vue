@@ -60,8 +60,53 @@
                 <div class="m-right">
                     <n-text class="m-section-title">可传功技能</n-text>
                     <div class="m-empty">暂无可传功技能（功能还没做~）</div>
-                    <n-text class="m-section-title">本周进度</n-text>
-                    <div class="m-empty">本周暂无进度</div>
+                    <n-text class="m-section-title">当前进度</n-text>
+                    <n-flex vertical>
+                        <n-flex justify="space-between">
+                            <span>当前：</span>
+                            <n-flex v-if="role.cd">
+                                <n-text>已经打咯~</n-text>
+                                <n-tooltip>
+                                    <template #trigger>
+                                        <n-button text size="tiny" type="info" @click="role.cd = false">
+                                            <template #icon>
+                                                <i-material-symbols:refresh-rounded />
+                                            </template>
+                                        </n-button>
+                                    </template>
+                                    点错了可以点这里重置到没打的状态~
+                                </n-tooltip>
+                            </n-flex>
+                            <n-flex v-else>
+                                <n-text>还没打</n-text>
+                                <n-button size="tiny" type="success" @click="role.cd = true">
+                                    <template #icon>
+                                        <i-material-symbols:check-rounded />
+                                    </template>
+                                    打完咯！
+                                </n-button>
+                            </n-flex>
+                        </n-flex>
+                        <n-flex justify="space-between">
+                            <span>备注：</span>
+                            <n-flex>
+                                <n-text>{{ role.cdRemark }}</n-text>
+                                <n-popover trigger="click">
+                                    <template #trigger>
+                                        <n-button text type="primary">
+                                            <template #icon>
+                                                <i-material-symbols:edit-rounded />
+                                            </template>
+                                        </n-button>
+                                    </template>
+                                    <n-input-group>
+                                        <n-input v-model:value="cdRemarkInput" @keyup.enter="onUpdateRoleCdRemark" />
+                                        <n-button type="primary" ghost @click="onUpdateRoleCdRemark"> 更新！ </n-button>
+                                    </n-input-group>
+                                </n-popover>
+                            </n-flex>
+                        </n-flex>
+                    </n-flex>
                 </div>
             </div>
         </div>
@@ -130,6 +175,15 @@ const spiritEndurance = computed(() => {
 const message = useMessage();
 const onPlanValue = () => {
     message.info("精耐提升规划功能正在开发中，敬请期待~");
+};
+
+// CD 更新相关事件
+const cdRemarkInput = ref<string>("");
+const onUpdateRoleCdRemark = () => {
+    if (!role.value) return;
+    useRoleStore().updateRole(role.value.id!, { cdRemark: cdRemarkInput.value });
+    message.success("CD备注已更新");
+    cdRemarkInput.value = ""; // 清空输入框
 };
 
 defineExpose({

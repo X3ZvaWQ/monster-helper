@@ -5,12 +5,7 @@
             <n-button @click="onCreateRole" type="primary">创建角色</n-button>
         </div>
         <div class="m-account-list" v-if="roleList.length">
-            <n-card
-                class="m-account-item"
-                v-for="(account, index) in roleList"
-                :key="index"
-                size="small"
-            >
+            <n-card class="m-account-item" v-for="(account, index) in roleList" :key="index" size="small">
                 <template #header>
                     <div class="m-account-title">{{ account.account }}</div>
                 </template>
@@ -21,22 +16,14 @@
                         :key="i"
                         @click="onOpenDetail(role.id!)"
                     >
-                        <img
-                            class="u-school-icon"
-                            :src="schoolIconLink(role.schoolId!)"
-                            alt=""
-                        />
+                        <img class="u-school-icon" :src="schoolIconLink(role.schoolId!)" alt="" />
                         <span class="u-role-name">{{ role.name }}</span>
                         <span class="u-role-server">{{ role.server }}</span>
                     </div>
                 </div>
             </n-card>
         </div>
-        <n-empty
-            class="m-empty"
-            v-else
-            description="没找到符合条件的角色，请点击右上角新建角色~"
-        />
+        <n-empty class="m-empty" v-else description="没找到符合条件的角色，请点击右上角新建角色~" />
     </div>
     <role-create-dialog ref="createDialog" />
     <role-detail-dialog ref="detailDialog" />
@@ -69,15 +56,11 @@ const roleList = computed(() => {
         .map((role) => ({
             ...role,
             searchKey:
-                getSearchKey(role.name) +
-                getSearchKey(role.server) +
-                getSearchKey(getSchoolName(role.schoolId!)),
+                getSearchKey(role.name) + getSearchKey(role.server) + getSearchKey(getSchoolName(role.schoolId!)),
         }))
         .filter((role) => {
             if (!search.value) return true;
-            return role.searchKey
-                .toLowerCase()
-                .includes(search.value.toLowerCase());
+            return role.searchKey.toLowerCase().includes(search.value.toLowerCase());
         })
         .groupBy((role) => role.account)
         .map((roles, account) => ({
