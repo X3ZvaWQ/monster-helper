@@ -3,3 +3,27 @@
     justify-content: center;
     align-items: center;
 }
+
+.scrollbar(@width:4px, @color: #888) {
+    &::-webkit-scrollbar {
+        width: @width;
+    }
+
+    
+    &::-webkit-scrollbar-track,
+    &::-webkit-scrollbar-track-piece {
+        border-radius: @width;
+        background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: @color;
+        border-radius: @width;
+    }
+
+    &::-webkit-scrollbar-button,
+    &::-webkit-scrollbar-corner,
+    &::-webkit-resizer {
+        display: none;
+    }
+}

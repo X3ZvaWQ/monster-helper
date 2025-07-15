@@ -40,7 +40,7 @@ const displayParseResult = computed(() => {
 }); // 技能列表
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 .m-skill-container {
     display: flex;
     flex-direction: column;
@@ -48,6 +48,7 @@ const displayParseResult = computed(() => {
     background-color: #1c2022;
     padding: 10px;
     overflow-y: auto;
+    .scrollbar();
 
     .m-skill-section {
         display: flex;
