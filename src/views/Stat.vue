@@ -15,11 +15,14 @@
         </div>
     </div>
     <stat-setting ref="settingPanel"></stat-setting>
+    <role-detail-dialog ref="roleDetail"></role-detail-dialog>
 </template>
 
 <script setup lang="ts">
-import { skillLevelLabel } from "@/assets/data/game";
+import RoleDetailDialog from "@/components/role/RoleDetailDialog.vue";
 import StatSetting from "@/components/stat/Setting.vue";
+
+import { skillLevelLabel } from "@/assets/data/game";
 import { useGameStore } from "@/store/game";
 import { useRoleStore } from "@/store/role";
 import { useSettingStore } from "@/store/setting";
@@ -135,9 +138,37 @@ const columns = computed(() => {
                             })
                         );
                     }
-                    divContent.push(
-                        h(resolveComponent("n-text"), { style: getStyle(item) }, { default: () => row[key] })
-                    );
+                    if (item.key == "cd" && row.cd) {
+                        divContent.push(
+                            h(resolveComponent("i-material-symbols:check-rounded"), {
+                                style: {
+                                    ...getStyle(item),
+                                    position: "relative",
+                                    bottom: "2px",
+                                },
+                            })
+                        );
+                    } else if (item.key === "role") {
+                        divContent.push(
+                            h(
+                                resolveComponent("n-button"),
+                                {
+                                    text: true,
+                                    type: "primary",
+                                    style: getStyle(item),
+                                    onClick: () => {
+                                        roleDetail.value?.open(row.id);
+                                    },
+                                    class: "u-role-name",
+                                },
+                                { default: () => row.role }
+                            )
+                        );
+                    } else {
+                        divContent.push(
+                            h(resolveComponent("n-text"), { style: getStyle(item) }, { default: () => row[key] })
+                        );
+                    }
                 } else if (item.type === "skill") {
                     const skillLevel = row[`skill-${item.skillId}`] || 0;
                     divContent.push(
@@ -153,6 +184,7 @@ const columns = computed(() => {
                     {
                         size: 2,
                         align: "center",
+                        wrap: false
                     },
                     { default: () => divContent }
                 );
@@ -171,6 +203,7 @@ const data = computed(() => {
     for (const role of roles) {
         const { spirit, endurance } = useRoleStore().calcSpiritAndEndurance(role);
         const row: StatTableDataRow = {
+            id: role.id!,
             account: role.account,
             server: role.server,
             role: role.name,
@@ -205,6 +238,8 @@ const tableWidth = computed(() => {
     const setting = useSettingStore().stat.columns;
     return sumBy(setting, (item) => item.width || 100);
 });
+
+const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
 </script>
 
 <style lang="less">
@@ -237,6 +272,13 @@ const tableWidth = computed(() => {
             width: 20px;
             height: 20px;
         }
+    }
+    .n-data-table {
+        
+        .u-role-name {
+            line-height: 1.6;
+        }
+        
     }
     .n-data-table-th__ellipsis {
         max-width: 100% !important;

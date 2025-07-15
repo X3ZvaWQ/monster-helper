@@ -20,7 +20,7 @@ interface BasicRoleStatSetting extends BaseStatSetting {
 
 interface BasicStatSetting extends BaseStatSetting {
     type: "basic";
-    key: "account" | "server" | "school" | "gender" | "spirit" | "endurance";
+    key: "account" | "server" | "school" | "gender" | "spirit" | "endurance" | "cd" | "cdRemark" | "remark";
     label: string;
 }
 
@@ -36,6 +36,7 @@ interface SkillStatSetting extends BaseStatSetting {
 type StatSetting = BasicRoleStatSetting | BasicStatSetting | SkillStatSetting;
 
 interface StatTableDataRow {
+    id: string;
     account: string;
     server: string;
     role: string;
