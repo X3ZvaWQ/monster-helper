@@ -1,5 +1,6 @@
 import { bossList } from "@/assets/data/game";
 import { url } from "@/assets/data/jx3box";
+import { fetch } from '@tauri-apps/plugin-http';
 
 interface MonsterSkillRaw {
     ParsedSkill: {

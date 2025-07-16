@@ -1,5 +1,3 @@
-import { c } from "naive-ui";
-
 export const bookIconId = [245, 92, 241, 244, 388] as const;
 
 /**

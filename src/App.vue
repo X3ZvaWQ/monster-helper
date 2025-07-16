@@ -2,14 +2,16 @@
     <n-config-provider :theme="themeRef" :locale="zhCN" :inline-theme-disabled="true">
         <n-global-style />
         <n-message-provider>
-            <n-dialog-provider>
-                <main class="c-layout">
-                    <SideBar />
-                    <div class="c-container">
-                        <router-view></router-view>
-                    </div>
-                </main>
-            </n-dialog-provider>
+            <n-notification-provider>
+                <n-dialog-provider>
+                    <main class="c-layout">
+                        <SideBar />
+                        <div class="c-container">
+                            <router-view></router-view>
+                        </div>
+                    </main>
+                </n-dialog-provider>
+            </n-notification-provider>
         </n-message-provider>
     </n-config-provider>
 </template>
