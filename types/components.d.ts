@@ -52,6 +52,7 @@ declare module 'vue' {
     NDivider: typeof import('naive-ui')['NDivider']
     NDrawer: typeof import('naive-ui')['NDrawer']
     NDrawerContent: typeof import('naive-ui')['NDrawerContent']
+    NEllipsis: typeof import('naive-ui')['NEllipsis']
     NEmpty: typeof import('naive-ui')['NEmpty']
     NFlex: typeof import('naive-ui')['NFlex']
     NForm: typeof import('naive-ui')['NForm']
@@ -88,5 +89,6 @@ declare module 'vue' {
     SkillList: typeof import('./../src/components/role/SkillList.vue')['default']
     SkillParse: typeof import('./../src/components/role/SkillParse.vue')['default']
     SkillSelect: typeof import('./../src/components/common/SkillSelect.vue')['default']
+    TeachList: typeof import('./../src/components/role/TeachList.vue')['default']
   }
 }

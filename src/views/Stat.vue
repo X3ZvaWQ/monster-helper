@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import RoleDetailDialog from "@/components/role/RoleDetailDialog.vue";
 import StatSetting from "@/components/stat/Setting.vue";
+import TeachList from "@/components/role/TeachList.vue";
 
 import { skillLevelLabel } from "@/assets/data/game";
 import { useGameStore } from "@/store/game";
@@ -172,6 +173,65 @@ const columns = computed(() => {
                                 { default: () => row.role }
                             )
                         );
+                    } else if (item.key === "teach") {
+                        // 表格内容渲染
+                        const renderData = row.teach.filter(([level]) => level >= (item.minLevel || 7));
+                        const renderTexts: string[] = [];
+                        for (const [level, bosses] of renderData) {
+                            for (const boss of bosses) {
+                                renderTexts.push(`${boss}${item.showLevel ? `·${skillLevelLabel[level]}` : ""}`);
+                            }
+                        }
+                        for (const [index, text] of renderTexts.entries()) {
+                            if (item.render === "tag") {
+                                divContent.push(
+                                    h(
+                                        resolveComponent("n-tag"),
+                                        { type: "info", size: "small", style: getStyle(item) },
+                                        { default: () => text }
+                                    )
+                                );
+                            } else {
+                                divContent.push(
+                                    h(resolveComponent("n-text"), { style: getStyle(item) }, { default: () => text })
+                                );
+                            }
+                            if (item.split && index < renderTexts.length - 1) {
+                                divContent.push(
+                                    h(
+                                        resolveComponent("n-text"),
+                                        { style: getStyle(item) },
+                                        { default: () => item.split }
+                                    )
+                                );
+                            }
+                        }
+                        // tooltip渲染
+                        const tooltipContent = h(TeachList, {
+                            teachList: row.teach,
+                        });
+                        return h(
+                            resolveComponent("n-tooltip"),
+                            {
+                                trigger: "hover",
+                                placement: "top",
+                                showArrow: true,
+                                style: getStyle(item),
+                            },
+                            {
+                                default: () => tooltipContent,
+                                trigger: () =>
+                                    h(
+                                        resolveComponent("n-flex"),
+                                        {
+                                            wrap: false,
+                                            size: 2,
+                                            align: "center",
+                                        },
+                                        { default: () => divContent }
+                                    ),
+                            }
+                        );
                     } else {
                         divContent.push(
                             h(resolveComponent("n-text"), { style: getStyle(item) }, { default: () => row[key] })
@@ -190,14 +250,16 @@ const columns = computed(() => {
                 return h(
                     resolveComponent("n-flex"),
                     {
-                        size: 2,
-                        align: "center",
                         wrap: false,
+                        align: "center",
+                        size: 2,
                     },
                     { default: () => divContent }
                 );
             },
         } as TableColumn<StatTableDataRow>;
+        // 可传功技能需要tooltip
+
         column.width = item.width || 100;
         if (item.fixed) column.fixed = item.fixed;
         result.push(column);
@@ -209,7 +271,7 @@ const data = computed(() => {
     const roles = useRoleStore().roles;
     const result: any[] = [];
     for (const role of roles) {
-        const { spirit, endurance } = useRoleStore().calcSpiritAndEndurance(role);
+        const { spirit, endurance, teach } = useRoleStore().calcSpiritAndEndurance(role);
         const row: StatTableDataRow = {
             id: role.id!,
             account: role.account,
@@ -223,8 +285,19 @@ const data = computed(() => {
             cd: role.cd || false,
             cdRemark: role.cdRemark || "",
             remark: role.remark || "",
+            teach: [],
             default: "-",
         };
+        {
+            // 可传功技能
+            for (const [level, bosses] of teach.entries()) {
+                if (level > 0 && bosses.length) {
+                    row.teach.push([level, bosses]);
+                }
+            }
+            row.teach.sort((a, b) => b[0] - a[0]);
+        }
+
         for (const column of useSettingStore().stat.columns) {
             const levelMap = useRoleStore().getSkillLevelMap(role);
             if (column.type === "skill") {
@@ -263,6 +336,18 @@ const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
         flex-shrink: 0;
         flex-grow: 1;
         overflow-x: auto;
+
+        .u-column-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            .n-image,
+            img {
+                flex-shrink: 0;
+                width: 20px;
+                height: 20px;
+            }
+        }
     }
 
     .m-toolbar {
@@ -270,17 +355,6 @@ const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
         justify-content: flex-end;
     }
 
-    .u-column-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        .n-image,
-        img {
-            flex-shrink: 0;
-            width: 20px;
-            height: 20px;
-        }
-    }
     .n-data-table {
         .u-role-name {
             line-height: 1.6;
@@ -289,9 +363,5 @@ const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
     .n-data-table-th__ellipsis {
         max-width: 100% !important;
     }
-    // .n-data-table-th,
-    // .n-data-table-td {
-    //     width: auto !important;
-    // }
 }
 </style>

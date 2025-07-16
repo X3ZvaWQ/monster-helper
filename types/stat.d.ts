@@ -18,6 +18,16 @@ interface BasicRoleStatSetting extends BaseStatSetting {
     withSchoolIcon: boolean;
 }
 
+interface BasicTeachStatSetting extends BaseStatSetting {
+    type: "basic";
+    key: "teach";
+    label: string;
+    minLevel?: number;
+    render?: "text" | "tag";
+    split?: string;
+    showLevel?: boolean;
+}
+
 interface BasicStatSetting extends BaseStatSetting {
     type: "basic";
     key: "account" | "server" | "school" | "gender" | "spirit" | "endurance" | "cd" | "cdRemark" | "remark";
@@ -33,7 +43,7 @@ interface SkillStatSetting extends BaseStatSetting {
     level?: "number" | "levelLabel";
 }
 
-type StatSetting = BasicRoleStatSetting | BasicStatSetting | SkillStatSetting;
+type StatSetting = BasicTeachStatSetting | BasicRoleStatSetting | BasicStatSetting | SkillStatSetting;
 
 interface StatTableDataRow {
     id: string;
@@ -48,6 +58,7 @@ interface StatTableDataRow {
     cd: boolean;
     cdRemark: string;
     remark: string;
+    teach: [number, string[]][];
     [key: `skill-${number}`]: number;
     default: "-";
 }

@@ -129,14 +129,7 @@
                         </n-flex>
                     </n-flex>
                     <n-text class="u-label">可传功</n-text>
-                    <n-flex vertical class="m-teach-list">
-                        <n-flex v-for="[level, bosses] in teachList" :key="level">
-                            <n-text>{{ skillLevelLabel[level] }}</n-text>
-                            <n-tag size="small" type="info" v-for="(boss, index) in bosses" :key="index">
-                                {{ boss }}
-                            </n-tag>
-                        </n-flex>
-                    </n-flex>
+                    <teach-list class="m-teach-list" :teach-list="teachList"></teach-list>
                 </div>
             </div>
         </div>
@@ -157,16 +150,16 @@
 </template>
 
 <script setup lang="ts">
-import { useMessage } from "naive-ui";
-import { ref, computed } from "vue";
-import { schoolIconLink } from "../../utils/game";
-import { useRoleStore } from "../../store/role";
-import SkillParse from "./SkillParse.vue";
 import SkillList from "./SkillList.vue";
+import SkillParse from "./SkillParse.vue";
+import EditableValue from "../common/EditableValue.vue";
+import TeachList from "./TeachList.vue";
+
+import { useMessage } from "naive-ui";
+import { useRoleStore } from "../../store/role";
+import { schoolIconLink } from "../../utils/game";
 import { cloneDeep } from "lodash";
 import { defaultRole } from "@/assets/data/role";
-import EditableValue from "../common/EditableValue.vue";
-import { skillLevelLabel } from "@/assets/data/game";
 
 // 更新技能列表逻辑
 const skillParse = ref<InstanceType<typeof SkillParse> | null>(null);

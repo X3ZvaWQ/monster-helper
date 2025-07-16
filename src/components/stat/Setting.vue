@@ -98,10 +98,58 @@
                                     <n-flex justify="space-between" align="center" v-if="column.type === 'skill'">
                                         <div class="u-item-label">重数显示</div>
                                         <div class="u-item-value">
-                                            <n-radio-group v-model:value="column.level">
+                                            <n-radio-group size="small" v-model:value="column.level">
                                                 <n-radio-button value="number" label="数字" />
                                                 <n-radio-button value="levelLabel" label="中文" />
                                             </n-radio-group>
+                                        </div>
+                                    </n-flex>
+                                    <n-flex
+                                        justify="space-between"
+                                        align="center"
+                                        v-if="column.type === 'basic' && column.key === 'teach'"
+                                    >
+                                        <div class="u-item-label">最小显示等级</div>
+                                        <div class="u-item-value">
+                                            <n-input-number
+                                                v-model:value="column.minLevel"
+                                                size="small"
+                                                :min="0"
+                                                :max="10"
+                                            />
+                                        </div>
+                                    </n-flex>
+                                    <n-flex
+                                        justify="space-between"
+                                        align="center"
+                                        v-if="column.type === 'basic' && column.key === 'teach'"
+                                    >
+                                        <div class="u-item-label">渲染方式</div>
+                                        <div class="u-item-value">
+                                            <n-radio-group size="small" v-model:value="column.render">
+                                                <n-radio-button value="text" label="文本" />
+                                                <n-radio-button value="tag" label="标签" />
+                                            </n-radio-group>
+                                        </div>
+                                    </n-flex>
+                                    <n-flex
+                                        justify="space-between"
+                                        align="center"
+                                        v-if="column.type === 'basic' && column.key === 'teach'"
+                                    >
+                                        <div class="u-item-label">分隔符号</div>
+                                        <div class="u-item-value">
+                                            <n-input size="small" v-model:value="column.split" />
+                                        </div>
+                                    </n-flex>
+                                    <n-flex
+                                        justify="space-between"
+                                        align="center"
+                                        v-if="column.type === 'basic' && column.key === 'teach'"
+                                    >
+                                        <div class="u-item-label">显示等级</div>
+                                        <div class="u-item-value">
+                                            <n-switch v-model:value="column.showLevel" size="small" />
                                         </div>
                                     </n-flex>
                                 </div>
@@ -190,6 +238,7 @@ const basicSelects = ref([
     { label: "性别", value: "gender", check: true },
     { label: "精神", value: "spirit", check: true },
     { label: "耐力", value: "endurance", check: true },
+    { label: "可传功", value: "teach", check: true },
     { label: "进度", value: "cd", check: true },
     { label: "进度备注", value: "cdRemark", check: true },
     { label: "备注", value: "remark", check: true },
@@ -315,7 +364,7 @@ defineExpose({ open });
         border: 1px solid #aeaeae;
         border-radius: 4px;
 
-        max-height: calc(100vh - 440px);
+        max-height: calc(100vh - 480px);
         overflow-y: auto;
     }
 
