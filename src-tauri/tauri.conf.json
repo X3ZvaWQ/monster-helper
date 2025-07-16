@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "百战小助手",
+  "productName": "monster-helper",
   "version": "1.0.0",
   "identifier": "com.jx3box.monster-helper",
   "build": {
