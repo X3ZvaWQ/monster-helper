@@ -34,9 +34,12 @@
 import { checkUpdate } from "@/utils/update";
 import { useNotification } from "naive-ui";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { useStateStore } from "@/store/state";
 
 const notification = useNotification();
 onMounted(() => {
+    if (Date.now() - useStateStore().lastCheckUpdate < 1000 * 60 * 60 * 3) return;
+    useStateStore().lastCheckUpdate = Date.now();
     checkUpdate()
         .then(({ isNewest, newestVersion }) => {
             if (isNewest) {
