@@ -14,6 +14,12 @@
             <n-flex>
                 <n-button type="info" @click="exportDialog?.open()">导出数据</n-button>
                 <n-button type="primary" @click="importDialog?.open()">导入数据</n-button>
+                <n-popconfirm @positive-click="onResetSetting">
+                    <template #trigger>
+                        <n-button secondary type="warning"> 重置设置 </n-button>
+                    </template>
+                    <n-text> 该操作会重置你所有的配置（目前主要是统计表格列配置，不包括角色数据） </n-text>
+                </n-popconfirm>
             </n-flex>
             <n-h6 prefix="bar">别名配置</n-h6>
             <n-alert title="占位" type="info">
@@ -41,10 +47,15 @@
 import { useMessage } from "naive-ui";
 import ExportDialog from "@/components/setting/ExportDialog.vue";
 import ImportDialog from "@/components/setting/ImportDialog.vue";
+import { useSettingStore } from "@/store/setting";
 
 const message = useMessage();
 const exportDialog = ref<InstanceType<typeof ExportDialog> | null>(null);
 const importDialog = ref<InstanceType<typeof ImportDialog> | null>(null);
+
+const onResetSetting = () => {
+    useSettingStore().$reset();
+}
 </script>
 
 <style lang="less" scoped></style>

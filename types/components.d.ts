@@ -88,6 +88,5 @@ declare module 'vue' {
     SkillParse: typeof import('./../src/components/role/SkillParse.vue')['default']
     SkillSelect: typeof import('./../src/components/common/SkillSelect.vue')['default']
     TeachList: typeof import('./../src/components/role/TeachList.vue')['default']
-    UpdateCheck: typeof import('./../src/components/common/UpdateCheck.vue')['default']
   }
 }
