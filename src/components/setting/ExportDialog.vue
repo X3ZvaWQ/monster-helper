@@ -51,6 +51,7 @@ import { useRoleStore } from "@/store/role";
 import { compressToBase64 } from "lz-string";
 import { useMessage } from "naive-ui";
 import saveAs from "file-saver";
+import { useSettingStore } from "@/store/setting";
 const message = useMessage();
 
 const visible = ref(false);
@@ -62,7 +63,7 @@ const exportItems = ref({
 const exportData = computed(() => {
     const data: Record<string, any> = {};
     if (exportItems.value.roles) data.roles = useRoleStore().$state;
-    if (exportItems.value.settings) data.settings = useRoleStore().$state;
+    if (exportItems.value.settings) data.settings = useSettingStore().$state;
     const compressedData = compressToBase64(JSON.stringify(data));
     // base64
     return compressedData;

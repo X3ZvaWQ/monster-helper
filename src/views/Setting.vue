@@ -16,6 +16,21 @@
                 <n-button type="primary" @click="importDialog?.open()">导入数据</n-button>
             </n-flex>
             <n-h6 prefix="bar">别名配置</n-h6>
+            <n-alert title="占位" type="info">
+                <n-text>
+                    大伙平时还是习惯称呼boss和技能的别名，比如“黑煞落贪狼”一般都直接叫“黑”或者“黑煞”更多。
+                </n-text>
+                <br />
+                <n-text>
+                    俺寻思提供一个配置别名的地方，配置一次别的地方默认就显示别名可能会更符合习惯一点。更短的名字也可以显示出更多东西
+                </n-text>
+                <br />
+                <n-text> 但是这个功能没什么动力写，到时候再说吧~ </n-text>
+            </n-alert>
+            <n-flex>
+                <n-button type="info" @click="message.info('还没做哦~')">首领别名配置</n-button>
+                <n-button type="info" @click="message.info('还没做哦~')">技能别名配置</n-button>
+            </n-flex>
         </n-flex>
     </div>
     <export-dialog ref="exportDialog"></export-dialog>
@@ -23,9 +38,11 @@
 </template>
 
 <script setup lang="ts">
+import { useMessage } from "naive-ui";
 import ExportDialog from "@/components/setting/ExportDialog.vue";
 import ImportDialog from "@/components/setting/ImportDialog.vue";
 
+const message = useMessage();
 const exportDialog = ref<InstanceType<typeof ExportDialog> | null>(null);
 const importDialog = ref<InstanceType<typeof ImportDialog> | null>(null);
 </script>
