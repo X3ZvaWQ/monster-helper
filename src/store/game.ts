@@ -13,6 +13,7 @@ export const useGameStore = defineStore("game", {
             getMonsterSkills().then((res) => {
                 this.skills = res;
                 this.skillMap = keyBy(res, "id");
+                console.log("技能数据已加载", this.skills.length);
             });
         },
         getSkillById(id: number) {

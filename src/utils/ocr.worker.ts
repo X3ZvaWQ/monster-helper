@@ -17,7 +17,7 @@ onmessage = async (event) => {
             const rec_onnx_buffer = await fetch(rec_onnx_url).then((res) => res.arrayBuffer());
             const ppocr_dict_string = await fetch(ppocr_dict_url)
                 .then((res) => res.text())
-                .then((text) => text.split("\n"));
+                .then((text) => text.split("\n").map(char => char.trim()));
             paddleOcrService = await PaddleOcrService.createInstance({
                 ort: ort,
                 detection: {

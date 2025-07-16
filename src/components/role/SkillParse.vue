@@ -56,11 +56,12 @@ watch(
         const bitmap = await createImageBitmap(file.value);
         status.value = "processing";
         const { recognize } = await useOcrService();
+        const  charWhiteList = useGameStore().getSkillNameCharWhiteList();
         recognize(
             "skill",
             bitmap,
             {
-                charWhiteList: useGameStore().getSkillNameCharWhiteList(),
+                charWhiteList,
             },
             (_, data) => {
                 const { error, msg, result } = data;
