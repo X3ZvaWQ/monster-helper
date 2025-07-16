@@ -128,6 +128,15 @@
                             </editable-value>
                         </n-flex>
                     </n-flex>
+                    <n-text class="u-label">可传功</n-text>
+                    <n-flex vertical class="m-teach-list">
+                        <n-flex v-for="[level, bosses] in teachList" :key="level">
+                            <n-text>{{ skillLevelLabel[level] }}</n-text>
+                            <n-tag size="small" type="info" v-for="(boss, index) in bosses" :key="index">
+                                {{ boss }}
+                            </n-tag>
+                        </n-flex>
+                    </n-flex>
                 </div>
             </div>
         </div>
@@ -157,6 +166,7 @@ import SkillList from "./SkillList.vue";
 import { cloneDeep } from "lodash";
 import { defaultRole } from "@/assets/data/role";
 import EditableValue from "../common/EditableValue.vue";
+import { skillLevelLabel } from "@/assets/data/game";
 
 // 更新技能列表逻辑
 const skillParse = ref<InstanceType<typeof SkillParse> | null>(null);
@@ -191,8 +201,19 @@ const role = computed(() => {
     return useRoleStore().roles.find((item) => item.id === roleId.value)! || cloneDeep(defaultRole);
 });
 const spiritEndurance = computed(() => {
-    const reuslt = useRoleStore().calcSpiritAndEndurance(role.value);
-    return reuslt;
+    return useRoleStore().calcSpiritAndEndurance(role.value);
+});
+const teachList = computed(() => {
+    const result: [number, string[]][] = [];
+    const calc = cloneDeep(spiritEndurance.value.teach);
+    for (const [level, bosses] of calc.entries()) {
+        if (level > 0 && bosses.length) {
+            result.push([level, bosses]);
+        }
+    }
+    // 从大到小排序
+    result.sort((a, b) => b[0] - a[0]);
+    return result;
 });
 const message = useMessage();
 const onPlanValue = () => {
@@ -301,6 +322,7 @@ defineExpose({
     }
     .m-left {
         width: 400px;
+        flex-shrink: 0;
     }
     .m-right {
         flex-grow: 1;
@@ -308,6 +330,11 @@ defineExpose({
         .u-label {
             opacity: 0.7;
         }
+    }
+    .m-teach-list {
+        max-height: 160px;
+        overflow-y: auto;
+        .scrollbar;
     }
     .m-actions {
         width: 100%;

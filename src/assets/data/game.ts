@@ -379,3 +379,14 @@ export const bookLearnCost = [
     null, // 8 -> 9 不能通过通本
     null, // 9 -> 10 不能通过通本
 ];
+
+export const teachSpritEnduranceRequire = [
+    null, // 0重无需传功
+    15000, // 1重
+    22000, // 2重
+    33000, // 3重
+    45000, // 4重
+    80000, // 5重
+    110000, // 6重
+    180000, // 7重
+];

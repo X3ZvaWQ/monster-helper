@@ -3,6 +3,7 @@ import {
     levelSpiritEnduranceCoef,
     noSpiritEnduranceSkills,
     noThreeLevelSpiritEnduranceSkills,
+    teachSpritEnduranceRequire,
     threeLevelSpiritEndurance,
 } from "@/assets/data/game";
 import { useGameStore } from "./game";
@@ -34,8 +35,8 @@ export const useRoleStore = defineStore("role", {
         getSkillLevelMap(role: Role): Record<number, number> {
             return chain(role.skills).keyBy("id").mapValues("level").value();
         },
-        calcSpiritAndEndurance(role: Role): { spirit: number; endurance: number } {
-            let result = { spirit: 10000, endurance: 10000 }; // 精耐初始值
+        calcSpiritAndEndurance(role: Role): { spirit: number; endurance: number; teach: string[][] } {
+            let result = { spirit: 10000, endurance: 10000, teach: Array.from({ length: 11 }, () => []) as string[][] }; // 精耐初始值
             if (!role.skills?.length) return result;
             // 1. 三本技能书判断
             const skillLevelCount = Array.from({ length: threeLevelSpiritEndurance.length }, () => 0);
@@ -55,6 +56,7 @@ export const useRoleStore = defineStore("role", {
             // 2. boss 全收集精耐
             const skillIdMap = this.getSkillLevelMap(role);
             for (const { boss, coef } of bossSpiritEnduranceCoef) {
+                let highestTeachLevel = 0; // 可传功等级
                 // 取出属于该boss的计算精耐的技能
                 const bossSkills = useGameStore().skills.filter(
                     (s) =>
@@ -69,11 +71,30 @@ export const useRoleStore = defineStore("role", {
                     if (bossSkills.every((s) => (skillIdMap[s.id] || 0) >= level)) {
                         result.spirit += levelCoef * actualCoef[0];
                         result.endurance += levelCoef * actualCoef[1];
+                        if (level > 3) {
+                            // 3级以上可以传功，可传功等级为 全收集等级 - 2
+                            highestTeachLevel = level - 2;
+                        }
                     } else {
                         break; // 如果有一个技能不满足条件，则不再增加该等级的精耐
                     }
                 }
+                result.teach[highestTeachLevel].push(boss);
             }
+            // 3. 传功技能计算
+            // 计算当前精耐可以传功的最大数值
+            const effectiveValue = Math.max(result.spirit, result.endurance);
+            for (const [level, requireValue] of teachSpritEnduranceRequire.entries()) {
+                if (!requireValue) continue;
+                if (effectiveValue < requireValue) {
+                    // 如果精耐最大值小于当前等级的传功需求，该等级的boss移到上一级
+                    if (level > 0) {
+                        result.teach[level - 1].push(...result.teach[level]);
+                        result.teach[level] = [];
+                    }
+                }
+            }
+            
             return result;
         },
     },

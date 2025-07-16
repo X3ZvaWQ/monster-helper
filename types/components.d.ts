@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    EditableValue: typeof import('./../src/components/common/EditableValue.vue')['default']
     'IAntDesign:editOutlined': typeof import('~icons/ant-design/edit-outlined')['default']
     'IAntDesign:inboxOutlined': typeof import('~icons/ant-design/inbox-outlined')['default']
     'IAntDesign:menuFoldOutlined': typeof import('~icons/ant-design/menu-fold-outlined')['default']
@@ -60,6 +61,7 @@ declare module 'vue' {
     NImage: typeof import('naive-ui')['NImage']
     NInput: typeof import('naive-ui')['NInput']
     NInputGroup: typeof import('naive-ui')['NInputGroup']
+    NInputNumber: typeof import('naive-ui')['NInputNumber']
     NMenu: typeof import('naive-ui')['NMenu']
     NMessageProvider: typeof import('naive-ui')['NMessageProvider']
     NModal: typeof import('naive-ui')['NModal']
