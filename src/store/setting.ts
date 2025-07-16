@@ -14,11 +14,7 @@ export const useSettingStore = defineStore("setting", {
                 fontSize: null as number | null,
                 fontWeight: null as number | null,
             },
-        },
-        alias: {
-            boss: {} as Record<string, string>,
-            skill: {} as Record<string, string>,
-        },
+        }
     }),
     actions: {
         buildStatData() {},
