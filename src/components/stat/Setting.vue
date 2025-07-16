@@ -3,7 +3,7 @@
         <n-drawer-content title="表格配置">
             <n-tabs type="line" default-value="column" animated>
                 <n-tab-pane name="column" tab="表格列配置">
-                    <n-h6 prefix="bar" align-text> 基本信息 </n-h6>
+                    <n-h6 prefix="bar"> 基本信息 </n-h6>
                     <n-flex>
                         <n-button
                             :key="index"
@@ -14,9 +14,9 @@
                             {{ item.label }}
                         </n-button>
                     </n-flex>
-                    <n-h6 prefix="bar" align-text> 技能等级 </n-h6>
+                    <n-h6 prefix="bar"> 技能等级 </n-h6>
                     <skill-select v-model:value="skillLevelSelects"></skill-select>
-                    <n-h6 prefix="bar" align-text> 已选择项目 </n-h6>
+                    <n-h6 prefix="bar"> 已选择项目 </n-h6>
                     <vue-draggable
                         class="m-stat-setting-list"
                         v-model="useSettingStore().stat.columns"
@@ -48,11 +48,20 @@
                                     </n-button>
                                 </template>
                                 <div class="m-stat-item-setting">
-                                    <n-flex justify="space-between" align="center">
+                                    <!-- <n-flex justify="space-between" :align="'center'">
                                         <div class="u-item-label">文字样式</div>
                                         <div class="u-item-value">全局样式（暂不支持修改）</div>
                                     </n-flex>
-                                    <n-flex justify="space-between" align="center" v-if="column.type === 'basic'">
+                                    <n-flex justify="space-between" :align="'center'">
+                                        <div class="u-item-label">列宽</div>
+                                        <div class="u-item-value">
+                                            <n-input-number
+                                                v-model:value="column.width"
+                                                size="small"
+                                            />
+                                        </div>
+                                    </n-flex> -->
+                                    <n-flex justify="space-between" :align="'center'" v-if="column.type === 'basic'">
                                         <div class="u-item-label">冻结列</div>
                                         <div class="u-item-value">
                                             <n-switch
@@ -63,7 +72,7 @@
                                             />
                                         </div>
                                     </n-flex>
-                                    <n-flex justify="space-between" align="center" v-if="column.type === 'skill'">
+                                    <n-flex justify="space-between" :align="'center'" v-if="column.type === 'skill'">
                                         <div class="u-item-label">显示图标</div>
                                         <div class="u-item-value">
                                             <n-switch v-model:value="column.withIcon" size="small" />
@@ -71,7 +80,7 @@
                                     </n-flex>
                                     <n-flex
                                         justify="space-between"
-                                        align="center"
+                                        :align="'center'"
                                         v-if="column.type === 'basic' && column.key === 'role'"
                                     >
                                         <div class="u-item-label">显示门派图标</div>
@@ -79,13 +88,13 @@
                                             <n-switch v-model:value="(column as any).withSchoolIcon" size="small" />
                                         </div>
                                     </n-flex>
-                                    <n-flex justify="space-between" align="center" v-if="column.type === 'skill'">
+                                    <n-flex justify="space-between" :align="'center'" v-if="column.type === 'skill'">
                                         <div class="u-item-label">显示技能名</div>
                                         <div class="u-item-value">
                                             <n-switch v-model:value="column.withLabel" size="small" />
                                         </div>
                                     </n-flex>
-                                    <n-flex justify="space-between" align="center">
+                                    <n-flex justify="space-between" :align="'center'">
                                         <div class="u-item-label">显示名称</div>
                                         <div class="u-item-value">
                                             <n-input
@@ -95,7 +104,7 @@
                                             />
                                         </div>
                                     </n-flex>
-                                    <n-flex justify="space-between" align="center" v-if="column.type === 'skill'">
+                                    <n-flex justify="space-between" :align="'center'" v-if="column.type === 'skill'">
                                         <div class="u-item-label">重数显示</div>
                                         <div class="u-item-value">
                                             <n-radio-group size="small" v-model:value="column.level">
@@ -106,7 +115,7 @@
                                     </n-flex>
                                     <n-flex
                                         justify="space-between"
-                                        align="center"
+                                        :align="'center'"
                                         v-if="column.type === 'basic' && column.key === 'teach'"
                                     >
                                         <div class="u-item-label">最小显示等级</div>
@@ -121,7 +130,7 @@
                                     </n-flex>
                                     <n-flex
                                         justify="space-between"
-                                        align="center"
+                                        :align="'center'"
                                         v-if="column.type === 'basic' && column.key === 'teach'"
                                     >
                                         <div class="u-item-label">渲染方式</div>
@@ -134,7 +143,7 @@
                                     </n-flex>
                                     <n-flex
                                         justify="space-between"
-                                        align="center"
+                                        :align="'center'"
                                         v-if="column.type === 'basic' && column.key === 'teach'"
                                     >
                                         <div class="u-item-label">分隔符号</div>
@@ -144,7 +153,7 @@
                                     </n-flex>
                                     <n-flex
                                         justify="space-between"
-                                        align="center"
+                                        :align="'center'"
                                         v-if="column.type === 'basic' && column.key === 'teach'"
                                     >
                                         <div class="u-item-label">显示等级</div>
@@ -162,14 +171,14 @@
                     </vue-draggable>
                 </n-tab-pane>
                 <n-tab-pane name="global" tab="全局配置">
-                    <n-h6 prefix="bar" align-text> 字体样式 </n-h6>
-                    <n-flex align="center" justify="center">
+                    <n-h6 prefix="bar"> 字体样式 </n-h6>
+                    <n-flex :align="'center'" justify="center">
                         <n-text :style="previewStyle">应该会是这样~</n-text>
                     </n-flex>
-                    <n-flex justify="space-between" align="center">
+                    <n-flex justify="space-between" :align="'center'">
                         <div class="u-item-label">文字大小</div>
                         <div class="u-item-value grow">
-                            <n-flex align="center" :wrap="false">
+                            <n-flex :align="'center'" :wrap="false">
                                 <n-slider
                                     v-model:value="useSettingStore().stat.style.fontSize!"
                                     :step="1"
@@ -184,10 +193,10 @@
                             </n-flex>
                         </div>
                     </n-flex>
-                    <n-flex justify="space-between" align="center">
+                    <n-flex justify="space-between" :align="'center'">
                         <div class="u-item-label">文字粗细</div>
                         <div class="u-item-value grow">
-                            <n-flex align="center" :wrap="false">
+                            <n-flex :align="'center'" :wrap="false">
                                 <n-slider
                                     v-model:value="useSettingStore().stat.style.fontWeight!"
                                     :step="100"
@@ -202,10 +211,10 @@
                             </n-flex>
                         </div>
                     </n-flex>
-                    <n-flex justify="space-between" align="center">
+                    <n-flex justify="space-between" :align="'center'">
                         <div class="u-item-label">文字颜色</div>
                         <div class="u-item-value grow">
-                            <n-flex align="center" :wrap="false">
+                            <n-flex :align="'center'" :wrap="false">
                                 <n-color-picker v-model:value="useSettingStore().stat.style.color!" size="small" />
                                 <n-button type="primary" text @click="useSettingStore().stat.style.color = null">
                                     <template #icon>
@@ -366,6 +375,7 @@ defineExpose({ open });
 
         max-height: calc(100vh - 480px);
         overflow-y: auto;
+        .scrollbar();
     }
 
     .m-stat-setting-item {

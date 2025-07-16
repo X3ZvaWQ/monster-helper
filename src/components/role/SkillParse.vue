@@ -12,40 +12,11 @@
         :show-icon="false"
     >
         <div class="m-skill-parse">
-            <div class="m-parse-input" v-if="!file">
-                <n-input
-                    v-if="mode === 'paste'"
-                    readonly
-                    @paste="onPaste"
-                    placeholder="可以直接在这里粘贴截图哦~ 也可以 -> "
-                    clearable
-                >
-                    <template #suffix>
-                        <n-button text class="no-padding" size="small" @click="mode = 'file'"> 选择图片 </n-button>
-                    </template>
-                </n-input>
-                <n-upload
-                    v-else
-                    :show-file-list="false"
-                    accept="image/*"
-                    :on-change="onFileChange"
-                    :custom-request="() => false"
-                    class="m-upload-inner"
-                    abstract
-                >
-                    <n-upload-dragger>
-                        <div class="m-upload-inner">
-                            <i-ant-design:inbox-outlined />
-                            <div>
-                                <span> 点击选择图片或者拖拽图片到此处~ 或者直接 </span>
-                                <n-button text class="no-padding" size="small" @click.stop="mode = 'paste'">
-                                    粘贴图片
-                                </n-button>
-                            </div>
-                        </div>
-                    </n-upload-dragger>
-                </n-upload>
-            </div>
+            <file-select v-if="!file" @select-file="file = $event">
+                <template #default>
+                    <n-text>选择或粘贴技能截图</n-text>
+                </template>
+            </file-select>
             <div class="m-parse-result">
                 <div class="m-parse-log" v-if="status === 'processing'">
                     <div class="u-loading"></div>
@@ -61,26 +32,17 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { useMessage, UploadFileInfo } from "naive-ui";
+import { useMessage } from "naive-ui";
 import { useGameStore } from "@/store/game";
 import SkillList from "./SkillList.vue";
+import FileSelect from "../common/FileSelect.vue";
 import { useOcrService } from "@/utils/use/ocr";
 
 const message = useMessage();
 const visible = ref(false);
 const status = ref<"idle" | "processing" | "success" | "error">("idle");
 const parseSkills = ref<RoleSkill[]>([]);
-const mode = ref<"file" | "paste">("paste");
 const file = ref<File | null>(null);
-const onFileChange = (options: { file: UploadFileInfo; fileList: Array<UploadFileInfo> }) => {
-    if (!options.file?.file) return;
-    file.value = options.file.file!;
-};
-const onPaste = async (event: ClipboardEvent) => {
-    const pasteFile = event.clipboardData?.files?.[0];
-    if (!pasteFile) return;
-    file.value = pasteFile;
-};
 
 watch(
     () => file.value,

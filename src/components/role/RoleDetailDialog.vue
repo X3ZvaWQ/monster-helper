@@ -10,7 +10,7 @@
         <div class="m-role-detail">
             <div class="m-role-info" v-if="role">
                 <div class="m-role-account">
-                    <n-flex align="center" class="w-full">
+                    <n-flex :align="'center'" class="w-full">
                         <n-text>{{ role.account }}</n-text>
                         <n-text>{{ role.server }}</n-text>
                         <n-text>
@@ -36,9 +36,9 @@
                 <div class="m-left">
                     <p class="m-section-title">
                         <n-text>角色技能</n-text>
-                        <n-button text class="u-edit" @click="onUpdateSkills" size="small">
+                        <n-button text type="primary" class="u-edit" @click="onUpdateSkills" size="small">
                             <template #icon>
-                                <i-ant-design:edit-outlined />
+                                <i-material-symbols:edit-rounded />
                             </template>
                         </n-button>
                     </p>
@@ -46,9 +46,9 @@
                     <div v-else class="m-empty">暂未记录技能，点击上方按钮更新技能列表</div>
                     <p class="m-section-title">
                         <n-text>角色背包</n-text>
-                        <n-button text class="u-edit" size="small">
+                        <n-button text type="primary" class="u-edit" size="small">
                             <template #icon>
-                                <i-ant-design:edit-outlined />
+                                <i-material-symbols:edit-rounded />
                             </template>
                         </n-button>
                     </p>

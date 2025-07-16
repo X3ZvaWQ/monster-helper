@@ -1,5 +1,5 @@
 <template>
-    <n-flex v-bind="$attrs" align="center">
+    <n-flex v-bind="$attrs" :align="'center'">
         <slot :value="value">
             <n-text>{{ value }}</n-text>
         </slot>
@@ -38,7 +38,7 @@ import type { InputInst, NPopover } from "naive-ui";
 // 传入类型与当前值
 const props = withDefaults(
     defineProps<{
-        value: string | number;
+        value: any;
         type?: "number" | "string";
     }>(),
     {
