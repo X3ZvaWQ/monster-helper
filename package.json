@@ -20,7 +20,7 @@
     "@tauri-apps/plugin-opener": "^2.4.0",
     "@types/lodash": "^4.17.20",
     "@types/node": "^22.16.0",
-    "@vueuse/core": "^13.4.0",
+    "@vueuse/core": "^13.5.0",
     "fastest-levenshtein": "^1.0.16",
     "file-saver": "^2.0.5",
     "jimp": "^1.6.0",

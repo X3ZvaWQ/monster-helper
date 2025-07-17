@@ -11,9 +11,9 @@
                 </n-popconfirm>
             </n-flex>
         </div>
-        <div class="m-data">
+        <div class="m-data" ref="tableWrapperRef">
             <n-data-table
-                ref="tableEl"
+                :max-height="maxHeight"
                 :columns="columns"
                 :data="data"
                 :bordered="true"
@@ -40,6 +40,7 @@ import { sumBy } from "lodash";
 import { DataTableColumns } from "naive-ui";
 import { TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
 import { CSSProperties } from "vue";
+import { useResizeObserver } from "@vueuse/core";
 
 const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) => {
     const settingColumn = useSettingStore().stat.columns.find(
@@ -321,6 +322,13 @@ const tableWidth = computed(() => {
 });
 
 const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
+const tableWrapperRef = ref<HTMLElement | null>(null);
+const maxHeight = ref(0);
+useResizeObserver(tableWrapperRef, (entries) => {
+    const entry = entries[0];
+    const { height } = entry.contentRect;
+    maxHeight.value = height - 50; // 减去顶部工具栏的高度
+});
 </script>
 
 <style lang="less">
@@ -335,7 +343,7 @@ const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
         width: 100%;
         flex-shrink: 0;
         flex-grow: 1;
-        overflow-x: auto;
+        height: 0;
 
         .u-column-title {
             display: flex;
@@ -353,6 +361,8 @@ const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);
     .m-toolbar {
         display: flex;
         justify-content: flex-end;
+        position: sticky;
+        top: 0;
     }
 
     .n-data-table {

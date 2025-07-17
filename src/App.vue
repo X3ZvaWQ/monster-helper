@@ -54,5 +54,7 @@ const themeRef = computed(() => {
     box-sizing: border-box;
     flex-grow: 1;
     min-width: 0;
+    overflow-y: auto;
+    .scrollbar();
 }
 </style>

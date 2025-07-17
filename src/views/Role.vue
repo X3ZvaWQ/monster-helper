@@ -88,6 +88,8 @@ const roleList = computed(() => {
     .m-toolbar {
         display: flex;
         align-items: center;
+        position: sticky;
+        top: 0;
     }
 
     .m-empty {
@@ -101,6 +103,9 @@ const roleList = computed(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 16px;
+
+        overflow-y: auto;
+        .scrollbar();
     }
 
     .m-account-item {
