@@ -4,4 +4,6 @@ declare global {
     }
 }
 
-export const fetch = window.__TAURI_INTERNALS__ ? await import('@tauri-apps/plugin-http').then(m => m.fetch) : window.fetch;
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
+
+export const fetch = window.__TAURI_INTERNALS__ ? tauriFetch : window.fetch;
