@@ -1,6 +1,7 @@
 import { bossList } from "@/assets/data/game";
 import { url } from "@/assets/data/jx3box";
-import { fetch } from '@tauri-apps/plugin-http';
+// 判断是否在tauri下
+import { fetch } from './fetch';
 
 interface MonsterSkillRaw {
     ParsedSkill: {
