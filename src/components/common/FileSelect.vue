@@ -17,14 +17,13 @@
             accept="image/*"
             :on-change="onFileChange"
             :custom-request="() => false"
-            class="m-upload-inner"
             abstract
         >
             <n-upload-dragger>
                 <div class="m-upload-inner">
                     <i-ant-design:inbox-outlined />
                     <div>
-                        <span> 点击选择图片或者拖拽图片到此处~ 或者直接 </span>
+                        <span> 点击选择图片或者直接 </span>
                         <n-button text class="no-padding" size="small" @click.stop="mode = 'paste'">
                             粘贴图片
                         </n-button>
@@ -54,4 +53,17 @@ const onPaste = async (event: ClipboardEvent) => {
 };
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.m-parse-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .m-upload-inner {
+        .flex-center;
+        flex-direction: column;
+        gap: 10px;
+        color: #aaa;
+    }
+}
+</style>

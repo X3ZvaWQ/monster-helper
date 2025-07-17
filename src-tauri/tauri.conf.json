@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "百战小助手",
+        "dragDropEnabled": false,
         "width": 800,
         "height": 600
       }

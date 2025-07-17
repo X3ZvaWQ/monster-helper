@@ -127,17 +127,6 @@ defineExpose({
         flex-direction: column;
         gap: 10px;
     }
-    .m-parse-input {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    .m-upload-inner {
-        .flex-center;
-        flex-direction: column;
-        gap: 10px;
-        color: #aaa;
-    }
     .m-parse-log {
         display: flex;
         flex-direction: column;
