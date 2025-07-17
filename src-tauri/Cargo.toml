@@ -1,6 +1,6 @@
 [package]
 name = "monster-helper"
-version = "1.0.1"
+version = "1.0.2"
 description = "百战小助手"
 authors = ["x3zvawq <x3zvawq@gmail.com>"]
 edition = "2021"
