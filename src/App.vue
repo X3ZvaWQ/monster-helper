@@ -41,6 +41,7 @@ const themeRef = computed(() => {
 
 <style lang="less">
 @import "./assets/style/common.less";
+@import "./assets/style/app.less";
 </style>
 <style lang="less" scoped>
 .c-layout {
