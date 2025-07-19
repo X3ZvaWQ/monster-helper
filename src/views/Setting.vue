@@ -37,6 +37,13 @@
                 <n-button type="info" @click="message.info('还没做哦~')">首领别名配置</n-button>
                 <n-button type="info" @click="message.info('还没做哦~')">技能别名配置</n-button>
             </n-flex>
+            <n-h6 prefix="bar">当前版本: v{{ version }}</n-h6>
+            <n-alert title="提示" type="info">
+                <n-text> 实际上首页每3小时都会自动检查一次更新~ </n-text>
+            </n-alert>
+            <n-flex>
+                <n-button type="info" @click="doCheckUpdate">检查更新</n-button>
+            </n-flex>
         </n-flex>
     </div>
     <export-dialog ref="exportDialog"></export-dialog>
@@ -48,6 +55,8 @@ import { useMessage } from "naive-ui";
 import ExportDialog from "@/components/setting/ExportDialog.vue";
 import ImportDialog from "@/components/setting/ImportDialog.vue";
 import { useSettingStore } from "@/store/setting";
+import { version } from "../../package.json";
+import { useCheckUpdate } from "@/utils/use/update";
 
 const message = useMessage();
 const exportDialog = ref<InstanceType<typeof ExportDialog> | null>(null);
@@ -55,7 +64,13 @@ const importDialog = ref<InstanceType<typeof ImportDialog> | null>(null);
 
 const onResetSetting = () => {
     useSettingStore().$reset();
-}
+};
+
+const notification = useNotification();
+const { checkUpdate } = useCheckUpdate(notification);
+const doCheckUpdate = () => {
+    checkUpdate();
+};
 </script>
 
 <style lang="less" scoped></style>

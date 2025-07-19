@@ -27,3 +27,4 @@ export const checkUpdate = async () => {
         changeLogs: newerLogs,
     };
 };
+
