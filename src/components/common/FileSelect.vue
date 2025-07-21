@@ -19,7 +19,6 @@
             :accept="props.type === 'image' ? 'image/*' : 'plain/text'"
             :on-change="onFileChange"
             :custom-request="() => false"
-            abstract
         >
             <n-upload-dragger>
                 <div class="m-upload-inner">
