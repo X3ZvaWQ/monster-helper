@@ -80,7 +80,8 @@ const onCopy = () => {
         });
 };
 const onDownload = () => {
-    saveAs(exportData.value, "百战助手导出数据.txt");
+    const blob = new Blob([exportData.value], { type: "text/plain;charset=utf-8" });
+    saveAs(blob, "百战助手导出数据.txt");
 };
 const onConfirm = () => {
     visible.value = false;

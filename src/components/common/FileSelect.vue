@@ -16,7 +16,7 @@
         <n-upload
             v-else
             :show-file-list="false"
-            :accept="props.type === 'image' ? 'image/*' : 'plain/text'"
+            :accept="props.type === 'image' ? 'image/*' : '.txt'"
             :on-change="onFileChange"
             :custom-request="() => false"
         >
