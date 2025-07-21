@@ -5,6 +5,7 @@ import { NaiveUiResolver } from "unplugin-vue-components/resolvers";
 import Icons from "unplugin-icons/vite";
 import IconsResolver from "unplugin-icons/resolver";
 import tailwindcss from "@tailwindcss/vite";
+import svgLoader from 'vite-svg-loader';
 
 import vue from "@vitejs/plugin-vue";
 import path from "path";
@@ -27,6 +28,7 @@ export default defineConfig(async () => ({
     },
     plugins: [
         vue(),
+        svgLoader(),
         AutoImport({
             imports: [
                 "vue",

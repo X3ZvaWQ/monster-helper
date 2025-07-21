@@ -8,7 +8,7 @@
             <n-text>作者：秀秀不咕@梦江南</n-text>
         </n-flex>
         <n-flex :align="'center'" class="m-info-item">
-            <img class="u-icon" src="@/assets/jx3box.svg" alt="魔盒" />
+            <jx3box-icon class="u-icon" />
             <n-text>
                 发布地址：<n-button text type="primary" @click="openUrl('https://www.jx3box.com/tool/101669')">
                     JX3BOX
@@ -17,7 +17,7 @@
         </n-flex>
         <n-flex :align="'center'" class="m-info-item">
             <i-mingcute:qq-fill class="u-icon" />
-            <n-text>联系方式：3303928580</n-text>
+            <n-text>联系方式(群)：785995635</n-text>
         </n-flex>
         <n-flex :align="'center'" class="m-info-item">
             <i-mdi:github class="u-icon" />
@@ -35,6 +35,7 @@ import { useCheckUpdate } from "@/utils/use/update";
 import { useNotification } from "naive-ui";
 import { useStateStore } from "@/store/state";
 import { openUrl } from "@/utils/actions";
+import Jx3boxIcon from "@/assets/jx3box.svg";
 
 const notification = useNotification();
 const { checkUpdate } = useCheckUpdate(notification);
@@ -57,7 +58,6 @@ onMounted(() => {
         min-width: 240px;
     }
     .u-icon {
-        color: white;
         width: 24px;
         height: 24px;
     }
