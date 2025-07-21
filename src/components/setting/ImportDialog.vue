@@ -10,7 +10,7 @@
     >
         <n-flex vertical :size="10">
             <n-text>导入数据文件</n-text>
-            <file-select @select-file="onSelectFile"></file-select>
+            <file-select @select-file="onSelectFile" type="file"></file-select>
             <n-text>或者直接粘贴内容</n-text>
             <n-input
                 v-model:value="inputValue"

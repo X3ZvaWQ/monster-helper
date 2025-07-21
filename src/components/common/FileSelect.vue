@@ -1,20 +1,22 @@
 <template>
-    <div class="m-parse-input">
+    <div class="m-file-select">
         <n-input
             v-if="mode === 'paste'"
             readonly
             @paste="onPaste"
-            placeholder="可以直接在这里粘贴截图哦~ 也可以 -> "
+            :placeholder="`可以直接在这里粘贴${targetLabel}哦~ 也可以 -> `"
             clearable
         >
             <template #suffix>
-                <n-button text class="no-padding" size="small" @click="mode = 'file'"> 选择图片 </n-button>
+                <n-button text class="no-padding" size="small" @click="mode = 'file'">
+                    {{ `选择${targetLabel}` }}
+                </n-button>
             </template>
         </n-input>
         <n-upload
             v-else
             :show-file-list="false"
-            accept="image/*"
+            :accept="props.type === 'image' ? 'image/*' : 'plain/text'"
             :on-change="onFileChange"
             :custom-request="() => false"
             abstract
@@ -23,9 +25,9 @@
                 <div class="m-upload-inner">
                     <i-ant-design:inbox-outlined />
                     <div>
-                        <span> 点击选择图片或者直接 </span>
+                        <span> 点击选择{{ targetLabel }}或者直接 </span>
                         <n-button text class="no-padding" size="small" @click.stop="mode = 'paste'">
-                            粘贴图片
+                            粘贴{{ targetLabel }}
                         </n-button>
                     </div>
                 </div>
@@ -40,6 +42,18 @@ import type { UploadFileInfo } from "naive-ui";
 const emits = defineEmits<{
     (e: "select-file", file: File | null): void;
 }>();
+const props = withDefaults(
+    defineProps<{
+        type?: "file" | "image";
+    }>(),
+    {
+        type: "image",
+    }
+);
+const targetLabel = computed(() => {
+    if (props.type === "file") return "文件";
+    return "图片";
+});
 
 const mode = ref<"file" | "paste">("paste");
 const onFileChange = (options: { file: UploadFileInfo; fileList: Array<UploadFileInfo> }) => {
@@ -54,7 +68,7 @@ const onPaste = async (event: ClipboardEvent) => {
 </script>
 
 <style lang="less" scoped>
-.m-parse-input {
+.m-file-select {
     display: flex;
     flex-direction: column;
     gap: 10px;
