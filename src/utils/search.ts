@@ -1,18 +1,13 @@
 import { pinyin } from "pinyin-pro";
 
-export const getSearchKey = (search: string): string => {
+export const getSearchKey = (...search: string[]): string => {
     if (!search) return "";
-    const wholePinyin = pinyin(search, { toneType: "none" });
-    const firstPinyin = pinyin(search, {
+    const searchStr = search.join("");
+    const wholePinyin = pinyin(searchStr, { toneType: "none" });
+    const firstPinyin = pinyin(searchStr, {
         pattern: "first",
         toneType: "none",
     });
-    const key = [
-        search,
-        wholePinyin,
-        wholePinyin.replace(/\s/g, ""),
-        firstPinyin,
-        firstPinyin.replace(/\s/g, ""),
-    ];
+    const key = [searchStr, wholePinyin, wholePinyin.replace(/\s/g, ""), firstPinyin, firstPinyin.replace(/\s/g, "")];
     return key.join(" ").toLowerCase().trim();
 };
