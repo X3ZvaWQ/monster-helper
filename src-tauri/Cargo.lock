@@ -2113,6 +2113,7 @@ dependencies = [
 name = "monster-helper"
 version = "1.0.2"
 dependencies = [
+ "backtrace",
  "serde",
  "serde_json",
  "tauri",

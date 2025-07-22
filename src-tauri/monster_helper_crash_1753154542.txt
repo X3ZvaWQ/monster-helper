@@ -1,0 +1,50 @@
+Panic occurred: PanicHookInfo { payload: Any { .. }, location: Location { file: "src/lib.rs", line: 9, col: 5 }, can_unwind: true, force_no_backtrace: false }
+   0: backtrace::backtrace::libunwind::trace
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/backtrace-0.3.75/src/backtrace/libunwind.rs:117:9
+      backtrace::backtrace::trace_unsynchronized
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/backtrace-0.3.75/src/backtrace/mod.rs:66:14
+   1: backtrace::backtrace::trace
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/backtrace-0.3.75/src/backtrace/mod.rs:53:14
+   2: backtrace::capture::Backtrace::create
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/backtrace-0.3.75/src/capture.rs:294:9
+   3: backtrace::capture::Backtrace::new
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/backtrace-0.3.75/src/capture.rs:259:22
+   4: monster_helper::main::{{closure}}
+             at /Users/x3zvawq/workspace/jx3box/monster-helper/src-tauri/src/main.rs:21:22
+   5: <alloc::boxed::Box<F,A> as core::ops::function::Fn<Args>>::call
+             at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/alloc/src/boxed.rs:1980:9
+      std::panicking::rust_panic_with_hook
+             at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:841:13
+   6: std::panicking::begin_panic_handler::{{closure}}
+             at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:699:13
+   7: std::sys::backtrace::__rust_end_short_backtrace
+             at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/sys/backtrace.rs:168:18
+   8: __rustc::rust_begin_unwind
+             at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:697:5
+   9: core::panicking::panic_fmt
+             at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/core/src/panicking.rs:75:14
+  10: monster_helper_lib::test_panic
+             at /Users/x3zvawq/workspace/jx3box/monster-helper/src-tauri/src/lib.rs:9:5
+  11: monster_helper_lib::run::{{closure}}::{{closure}}
+             at /Users/x3zvawq/workspace/jx3box/monster-helper/src-tauri/src/lib.rs:7:1
+  12: monster_helper_lib::run::{{closure}}
+             at /Users/x3zvawq/workspace/jx3box/monster-helper/src-tauri/src/lib.rs:7:1
+  13: <alloc::boxed::Box<F,A> as core::ops::function::Fn<Args>>::call
+             at /Users/x3zvawq/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/alloc/src/boxed.rs:1980:9
+  14: tauri::manager::AppManager<R>::run_invoke_handler
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.5.1/src/manager/mod.rs:483:5
+  15: tauri::webview::Webview<R>::on_message
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.5.1/src/webview/mod.rs:1639:21
+  16: tauri::ipc::protocol::get::{{closure}}
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.5.1/src/ipc/protocol.rs:75:15
+  17: <alloc::boxed::Box<F,A> as core::ops::function::Fn<Args>>::call
+             at /Users/x3zvawq/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/alloc/src/boxed.rs:1980:9
+  18: tauri::manager::webview::WebviewManager<R>::prepare_pending_webview::{{closure}}
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.5.1/src/manager/webview.rs:277:9
+  19: <alloc::boxed::Box<F,A> as core::ops::function::Fn<Args>>::call
+             at /Users/x3zvawq/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/alloc/src/boxed.rs:1980:9
+  20: tauri_runtime_wry::create_webview::{{closure}}
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-runtime-wry-2.6.0/src/lib.rs:4727:9
+  21: wry::wkwebview::class::url_scheme_handler::start_task
+             at /Users/x3zvawq/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wry-0.51.2/src/wkwebview/class/url_scheme_handler.rs:320:11
+  22: <unknown>
