@@ -56,7 +56,7 @@ import { useRoleStore } from "../../store/role";
 import serverList from "@jx3box/jx3box-data/data/server/server_std.json";
 import mountMap from "@jx3box/jx3box-data/data/xf/school.json";
 import { nanoid } from "nanoid";
-import { getSearchKey } from "@/utils/search";
+import { getSearchKey, matchSearch } from "@/utils/search";
 import type { FormInst, FormRules } from "naive-ui";
 import { defaultRole } from "@/assets/data/role";
 
@@ -87,7 +87,7 @@ const schoolOptions = computed(() => {
     }));
 });
 const optionFilter = (pattern: string, option: any) => {
-    return getSearchKey(option.label).toLowerCase().includes(pattern.toLowerCase());
+    return matchSearch(pattern, getSearchKey(option.label));
 };
 
 const visible = ref(false);

@@ -10,10 +10,10 @@ export const useGameStore = defineStore("game", {
     }),
     actions: {
         fetchSkills() {
+            if(this.skills.length) return; // 如果技能已经加载过了，就不再加载
             getMonsterSkills().then((res) => {
                 this.skills = res;
                 this.skillMap = keyBy(res, "id");
-                console.log("技能数据已加载", this.skills.length);
             });
         },
         getSkillById(id: number) {
@@ -82,6 +82,6 @@ export const useGameStore = defineStore("game", {
                 }
             }
             return result;
-        }
+        },
     },
 });

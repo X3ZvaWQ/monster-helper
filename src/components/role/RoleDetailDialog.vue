@@ -41,6 +41,11 @@
                                 <i-material-symbols:edit-rounded />
                             </template>
                         </n-button>
+                        <n-button text type="primary" class="u-edit" @click="onGoBossStat" size="small">
+                            <template #icon>
+                                <i-mdi:chart-arc />
+                            </template>
+                        </n-button>
                     </p>
                     <skill-list v-if="role?.skills?.length" class="m-role-skills" :skills="role.skills"></skill-list>
                     <div v-else class="m-empty">暂未记录技能，点击上方按钮更新技能列表</div>
@@ -171,6 +176,10 @@ const onUpdateSkills = async () => {
     } catch (error) {
         console.error("技能更新失败:", error);
     }
+};
+const router = useRouter();
+const onGoBossStat = () => {
+    router.push({ name: "stat-boss", params: { roleId: roleId.value } });
 };
 
 // 对话框打开/关闭逻辑

@@ -42,7 +42,7 @@ import { chain } from "lodash";
 import RoleCreateDialog from "../components/role/RoleCreateDialog.vue";
 import RoleDetailDialog from "../components/role/RoleDetailDialog.vue";
 import { useRoleStore } from "../store/role";
-import { getSearchKey } from "../utils/search";
+import { getSearchKey, matchSearch } from "../utils/search";
 import { getSchoolName, schoolIconLink } from "../utils/game";
 
 const createDialog = ref<InstanceType<typeof RoleCreateDialog> | null>(null);
@@ -62,12 +62,11 @@ const roleList = computed(() => {
     return chain(useRoleStore().roles)
         .map((role) => ({
             ...role,
-            searchKey:
-                getSearchKey(role.name) + getSearchKey(role.server) + getSearchKey(getSchoolName(role.schoolId!)),
+            searchKey: getSearchKey(role.name, role.account, role.server, getSchoolName(role.schoolId!)),
         }))
         .filter((role) => {
             if (!search.value) return true;
-            return role.searchKey.toLowerCase().includes(search.value.toLowerCase());
+            return matchSearch(search.value, role.searchKey);
         })
         .groupBy((role) => role.account)
         .map((roles, account) => ({

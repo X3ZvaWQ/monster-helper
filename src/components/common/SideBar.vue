@@ -59,10 +59,11 @@ const items = reactive([
 const menuValue = ref("home");
 const route = useRoute();
 watch(
-    () => route.name,
-    (newName) => {
-        if (newName && menuValue.value != newName) {
-            menuValue.value = newName as string;
+    () => [route.name, route.meta],
+    () => {
+        const menuName = route.meta?.menu || route.name;
+        if (menuName && menuValue.value != menuName) {
+            menuValue.value = menuName as string;
         }
     },
     { immediate: true }

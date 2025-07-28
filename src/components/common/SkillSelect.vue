@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { useGameStore } from "@/store/game";
 import { iconLink } from "@/utils/game";
-import { getSearchKey } from "@/utils/search";
+import { getSearchKey, matchSearch } from "@/utils/search";
 import { SelectRenderLabel, SelectRenderTag } from "naive-ui";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 
@@ -87,7 +87,7 @@ const skillSelectTag: SelectRenderTag = ({ option, handleClose }) => {
     );
 };
 const filter = (pattern: string, option: any) => {
-    return option.search.toLowerCase().includes(pattern.toLowerCase());
+    return matchSearch(pattern, option.search);
 };
 </script>
 

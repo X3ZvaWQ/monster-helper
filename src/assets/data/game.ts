@@ -358,6 +358,16 @@ export const noThreeLevelSpiritEnduranceSkills = new Set([
     39298, // 绝地反击
 ]);
 
+export const addonSkillMap = new Map<number, number>([
+    [30137, 39292], // 定波 -> 逆波
+    [35132, 39293], // 鲨之息 -> 夜叉浮乐
+    [30750, 39294], // 枪法铁林 -> 铁猬
+    [30587, 39295], // 归潮长生法 -> 海龙御劲
+    [35139, 39296], // 角抵技巧 -> 俯阵熊突
+    [30542, 39297], // 五行术土遁 -> 麒麟遁甲
+    [30687, 39298], // 帝骖 -> 绝地反击
+]);
+
 /** 可交易的技能列表，暂时没有数据 */
 export const tradeableSkills = new Set([]);
 

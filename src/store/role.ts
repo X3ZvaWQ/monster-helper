@@ -32,11 +32,29 @@ export const useRoleStore = defineStore("role", {
             if (!role) return;
             Object.assign(role, payload);
         },
+        getRoleById(id: string) {
+            return this.roles.find((r) => r.id === id);
+        },
         getSkillLevelMap(role: Role): Record<number, number> {
             return chain(role.skills).keyBy("id").mapValues("level").value();
         },
-        calcSpiritAndEndurance(role: Role): { spirit: number; endurance: number; teach: string[][] } {
-            let result = { spirit: 10000, endurance: 10000, teach: Array.from({ length: 11 }, () => []) as string[][] }; // 精耐初始值
+        calcSpiritAndEndurance(role: Role) {
+            let result = {
+                spirit: 10000,
+                endurance: 10000,
+                teach: Array.from({ length: 11 }, () => []) as string[][],
+                threeSkillSpiritEndurance: 0,
+                bossSpiritEndurance: {} as Record<
+                    string,
+                    {
+                        spirit: number;
+                        endurance: number;
+                        collectLevel: number;
+                        collectCount: number;
+                        collectTotal: number;
+                    }
+                >,
+            }; // 精耐初始值
             if (!role.skills?.length) return result;
             // 1. 三本技能书判断
             const skillLevelCount = Array.from({ length: threeLevelSpiritEndurance.length }, () => 0);
@@ -53,29 +71,45 @@ export const useRoleStore = defineStore("role", {
                     result.endurance += value;
                 }
             }
+            result.threeSkillSpiritEndurance = result.spirit;
             // 2. boss 全收集精耐
             const skillIdMap = this.getSkillLevelMap(role);
             for (const { boss, coef } of bossSpiritEnduranceCoef) {
+                let bossSpirit = 0;
+                let bossEndurance = 0;
                 let highestTeachLevel = 0; // 可传功等级
+                let collectLevel = 0; // 全收集等级
                 // 取出属于该boss的计算精耐的技能
                 const bossSkills = useGameStore().skills.filter(
                     (s) =>
                         s.belongBoss?.includes(boss) &&
                         !noSpiritEnduranceSkills.has(s.id) &&
+                        !noThreeLevelSpiritEnduranceSkills.has(s.id) &&
                         (s.gender === null || s.gender == role.gender)
                 );
                 if (bossSkills.length === 0) continue; // 没有技能，跳过
                 const actualCoef = typeof coef[0] === "number" ? coef : role.gender === "female" ? coef[0] : coef[1];
                 for (const [level, levelCoef] of levelSpiritEnduranceCoef.entries()) {
                     // 如果所有技能都大于等于该等级，则增加精耐
-                    if (bossSkills.every((s) => (skillIdMap[s.id] || 0) >= level)) {
-                        result.spirit += levelCoef * actualCoef[0];
-                        result.endurance += levelCoef * actualCoef[1];
+                    const enoughLevelSkill = bossSkills.filter((s) => (skillIdMap[s.id] || 0) >= level);
+                    if (enoughLevelSkill.length === bossSkills.length) {
+                        bossSpirit += levelCoef * actualCoef[0];
+                        bossEndurance += levelCoef * actualCoef[1];
+                        collectLevel = level; // 更新全收集等级
                         if (level > 3) {
                             // 3级以上可以传功，可传功等级为 全收集等级 - 2
                             highestTeachLevel = level - 2;
                         }
                     } else {
+                        result.bossSpiritEndurance[boss] = {
+                            spirit: bossSpirit,
+                            endurance: bossEndurance,
+                            collectCount: enoughLevelSkill.length, // 初始收集数为0
+                            collectTotal: bossSkills.length, // 总收集数
+                            collectLevel: collectLevel + 1, // 全收集等级
+                        };
+                        result.spirit += bossSpirit;
+                        result.endurance += bossEndurance;
                         break; // 如果有一个技能不满足条件，则不再增加该等级的精耐
                     }
                 }
@@ -94,7 +128,7 @@ export const useRoleStore = defineStore("role", {
                     }
                 }
             }
-            
+
             return result;
         },
     },

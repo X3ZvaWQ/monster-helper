@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { useRoleStore } from "@/store/role";
 import { getSchoolName, iconLink } from "@/utils/game";
-import { getSearchKey } from "@/utils/search";
+import { getSearchKey, matchSearch } from "@/utils/search";
 import { SelectOption } from "naive-ui";
 
 const value = defineModel<string>("value", {
@@ -44,8 +44,7 @@ const roleOptions = computed(() => {
 // 筛选函数
 const filter = (pattern: string, option: any) => {
     if (!pattern) return true;
-    const patternLower = pattern.toLowerCase();
-    return option.searchKey.includes(patternLower);
+    return matchSearch(pattern, option.searchKey);
 };
 // 选项渲染函数
 const renderLabel = (option: SelectOption) => {

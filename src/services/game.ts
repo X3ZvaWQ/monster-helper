@@ -1,7 +1,7 @@
 import { bossList } from "@/assets/data/game";
 import { url } from "@/assets/data/jx3box";
 // 判断是否在tauri下
-import { fetch } from './fetch';
+import { fetch } from "./fetch";
 
 interface MonsterSkillRaw {
     ParsedSkill: {
@@ -54,10 +54,11 @@ export const getMonsterSkills = async () => {
                     };
                     for (const bossName of raw.szBossName.split(";")) {
                         if (!bossName) continue;
-                        const boss = bossList.find((b) => b.skillAlias === bossName);
+                        let boss = bossList.find((b) => b.skillAlias === bossName);
                         if (!boss) continue;
                         if (!skill.belongBoss) skill.belongBoss = [];
-                        skill.belongBoss.push(boss.name);
+                        const name = boss.name.includes("恶战") ? "恶战" : boss.name;
+                        skill.belongBoss.push(name);
                     }
                     return skill;
                 });

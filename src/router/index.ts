@@ -1,8 +1,4 @@
-import {
-    createWebHistory,
-    createRouter as _createRouter,
-    RouteRecordRaw,
-} from "vue-router";
+import { createWebHistory, createRouter as _createRouter, RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
     { path: "/", redirect: "/home" },
@@ -15,6 +11,14 @@ const routes: RouteRecordRaw[] = [
         name: "stat",
         path: "/stat",
         component: () => import("@/views/Stat.vue"),
+    },
+    {
+        name: "stat-boss",
+        path: "/stat/boss/:roleId",
+        component: () => import("@/views/StatBoss.vue"),
+        meta: {
+            menu: "stat",
+        },
     },
     {
         name: "role",
