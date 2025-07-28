@@ -25,3 +25,6 @@ serde_json = "1"
 tauri-plugin-http = "2"
 backtrace = "0.3.75"
 
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-window-state = "2"
+
