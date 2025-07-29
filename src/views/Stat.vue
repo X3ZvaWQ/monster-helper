@@ -94,7 +94,19 @@ const columns = computed(() => {
         const column = {
             key,
             resizable: true,
-            sorter: "default",
+            sorter(a, b) {
+                if (typeof a[key] === "string" && typeof b[key] === "string") {
+                    return a[key].localeCompare(b[key]);
+                } else if (typeof a[key] === "number" && typeof b[key] === "number") {
+                    return a[key] - b[key];
+                } else if (typeof a[key] === "boolean" && typeof b[key] === "boolean") {
+                    return Number(a[key]) - Number(b[key]);
+                } else if (a[key] === null || a[key] === undefined) {
+                    return 1;
+                } else if (b[key] === null || b[key] === undefined) {
+                    return -1; 
+                }
+            },
             minWidth: 1,
             ellipsis: true,
             title() {
