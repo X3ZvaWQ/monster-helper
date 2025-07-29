@@ -89,9 +89,10 @@ export const useRoleStore = defineStore("role", {
                 );
                 if (bossSkills.length === 0) continue; // 没有技能，跳过
                 const actualCoef = typeof coef[0] === "number" ? coef : role.gender === "female" ? coef[0] : coef[1];
+                let enoughLevelSkill = [];
                 for (const [level, levelCoef] of levelSpiritEnduranceCoef.entries()) {
                     // 如果所有技能都大于等于该等级，则增加精耐
-                    const enoughLevelSkill = bossSkills.filter((s) => (skillIdMap[s.id] || 0) >= level);
+                    enoughLevelSkill = bossSkills.filter((s) => (skillIdMap[s.id] || 0) >= level);
                     if (enoughLevelSkill.length === bossSkills.length) {
                         bossSpirit += levelCoef * actualCoef[0];
                         bossEndurance += levelCoef * actualCoef[1];
@@ -101,18 +102,19 @@ export const useRoleStore = defineStore("role", {
                             highestTeachLevel = level - 2;
                         }
                     } else {
-                        result.bossSpiritEndurance[boss] = {
-                            spirit: bossSpirit,
-                            endurance: bossEndurance,
-                            collectCount: enoughLevelSkill.length, // 初始收集数为0
-                            collectTotal: bossSkills.length, // 总收集数
-                            collectLevel: collectLevel + 1, // 全收集等级
-                        };
-                        result.spirit += bossSpirit;
-                        result.endurance += bossEndurance;
-                        break; // 如果有一个技能不满足条件，则不再增加该等级的精耐
+                        break;
                     }
                 }
+                result.bossSpiritEndurance[boss] = {
+                    spirit: bossSpirit,
+                    endurance: bossEndurance,
+                    collectCount: enoughLevelSkill.length, // 初始收集数为0
+                    collectTotal: bossSkills.length, // 总收集数
+                    collectLevel: collectLevel + 1, // 全收集等级
+                };
+                result.spirit += bossSpirit;
+                result.endurance += bossEndurance;
+
                 result.teach[highestTeachLevel].push(boss);
             }
             // 3. 传功技能计算
