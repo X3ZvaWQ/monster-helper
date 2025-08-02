@@ -2,6 +2,33 @@
     <div class="p-role">
         <n-flex class="m-toolbar" :wrap="false">
             <n-input class="grow" v-model:value="search" placeholder="搜索角色" clearable />
+            <n-popover trigger="click">
+                <template #trigger>
+                    <n-button text type="primary">
+                        <i-material-symbols:settings-rounded />
+                    </n-button>
+                </template>
+                <n-flex vertical :size="6" class="m-stat-boss-setting">
+                    <n-flex justify="space-between">
+                        <n-text class="flex items-center gap-1"> 角色右侧展示 </n-text>
+                        <n-button
+                            type="primary"
+                            size="small"
+                            v-if="useSettingStore().role.meta === 'cd'"
+                            @click="useSettingStore().role.meta = 'server'"
+                        >
+                            本周进度</n-button
+                        >
+                        <n-button
+                            type="primary"
+                            size="small"
+                            v-if="useSettingStore().role.meta === 'server'"
+                            @click="useSettingStore().role.meta = 'cd'"
+                            >角色区服</n-button
+                        >
+                    </n-flex>
+                </n-flex>
+            </n-popover>
             <n-button @click="onCreateRole" type="primary">创建角色</n-button>
             <n-popconfirm @positive-click="useRoleStore().resetCd()">
                 <template #trigger>
@@ -25,7 +52,13 @@
                     >
                         <img class="u-school-icon" :src="schoolIconLink(role.schoolId!)" alt="" />
                         <span class="u-role-name">{{ role.name }}</span>
-                        <span class="u-role-server">{{ role.server }}</span>
+                        <span class="u-role-server" v-if="useSettingStore().role.meta === 'server'">
+                            {{ role.server }}
+                        </span>
+                        <span class="u-role-server flex items-center" v-else-if="useSettingStore().role.meta === 'cd'">
+                            <i-material-symbols:check-rounded v-if="role.cd" />
+                            <span v-if="role.cdRemark">({{ role.cdRemark }})</span>
+                        </span>
                     </div>
                 </div>
             </n-card>
@@ -44,6 +77,7 @@ import RoleDetailDialog from "../components/role/RoleDetailDialog.vue";
 import { useRoleStore } from "../store/role";
 import { getSearchKey, matchSearch } from "../utils/search";
 import { getSchoolName, schoolIconLink } from "../utils/game";
+import { useSettingStore } from "@/store/setting";
 
 const createDialog = ref<InstanceType<typeof RoleCreateDialog> | null>(null);
 const onCreateRole = () => {

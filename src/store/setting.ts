@@ -7,6 +7,9 @@ export const useSettingStore = defineStore("setting", {
         menu: {
             collapsed: false,
         },
+        role: {
+            meta: "server" as "server" | "cd",
+        },
         stat: {
             columns: cloneDeep(defaultStatColumns),
             style: {
@@ -21,5 +24,5 @@ export const useSettingStore = defineStore("setting", {
             hiddenCollectedBoss: true as boolean, // 隐藏已收集
             hiddenAddon: false as boolean, // 隐藏附带的防御技能
         },
-    })
+    }),
 });
