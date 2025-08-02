@@ -247,7 +247,7 @@ import { useGameStore } from "@/store/game";
 import { VueDraggable } from "vue-draggable-plus";
 import { iconLink } from "@/utils/game";
 import type { CSSProperties } from "vue";
-import { c } from "naive-ui";
+
 
 // 基础信息选择项
 const basicSelects = ref([
