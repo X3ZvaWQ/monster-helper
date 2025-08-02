@@ -324,6 +324,8 @@ onMounted(() => {
             font-size: 12px;
             // 黑色轮廓
             text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;
+            color: white;
+            
         }
 
         .u-name {
