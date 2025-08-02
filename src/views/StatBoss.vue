@@ -24,7 +24,7 @@
                                         <i-material-symbols:info />
                                     </n-icon>
                                 </template>
-                                <n-text>如果某个首领的技能等级都大于该重数，则认为是已收集首领</n-text>
+                               如果某个首领的技能等级都大于该重数，则认为是已收集首领
                             </n-tooltip>
                         </n-text>
                         <n-input-number
