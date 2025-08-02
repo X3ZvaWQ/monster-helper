@@ -25,6 +25,7 @@ export const getSearchKey = (...search: string[]): string => {
 
     // 生成全拼和缩写组合
     const results = new Set<string>();
+    results.add(searchStr); // 添加原始字符串
     for (const combo of combinations) {
         const full = combo.map((pair) => pair[0]).join("");
         const abbr = combo.map((pair) => pair[1]).join("");
