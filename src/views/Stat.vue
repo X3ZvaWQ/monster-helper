@@ -78,12 +78,18 @@ const columns = computed(() => {
         return "default";
     };
     const getColumnLabel = (item: StatSetting) => {
-        if (item.label) return item.label;
-        if (item.type === "basic") return item.key;
-        if (item.type === "skill") {
+        let label = "";
+        if (item.label) label = item.label;
+        else if (item.type === "basic") label = item.key;
+        else if (item.type === "skill") {
             const skill = useGameStore().getSkillById(item.skillId);
-            return skill ? skill.name : `技能-${item.skillId}`;
+            label = skill ? skill.name : `技能-${item.skillId}`;
         }
+        if (item.type === "basic" && item.key === "cd" && item.stat !== false) {
+            const count = filterData.value.filter((row) => row.cd).length;
+            label += `(${count}/${filterData.value.length})`;
+        }
+        return label;
     };
     const getStyle = (item: StatSetting): CSSProperties => {
         const style: CSSProperties = {};

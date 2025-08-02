@@ -104,6 +104,16 @@
                                             />
                                         </div>
                                     </n-flex>
+                                    <n-flex
+                                        justify="space-between"
+                                        :align="'center'"
+                                        v-if="column.type === 'basic' && column.key === 'cd'"
+                                    >
+                                        <div class="u-item-label">展示统计</div>
+                                        <div class="u-item-value">
+                                            <n-switch v-model:value="(column as any).stat" size="small" />
+                                        </div>
+                                    </n-flex>
                                     <n-flex justify="space-between" :align="'center'" v-if="column.type === 'skill'">
                                         <div class="u-item-label">重数显示</div>
                                         <div class="u-item-value">
@@ -237,6 +247,7 @@ import { useGameStore } from "@/store/game";
 import { VueDraggable } from "vue-draggable-plus";
 import { iconLink } from "@/utils/game";
 import type { CSSProperties } from "vue";
+import { c } from "naive-ui";
 
 // 基础信息选择项
 const basicSelects = ref([

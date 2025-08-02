@@ -28,9 +28,16 @@ interface BasicTeachStatSetting extends BaseStatSetting {
     showLevel?: boolean;
 }
 
+interface BasicCdStatSetting extends BaseStatSetting {
+    type: "basic";
+    key: "cd";
+    label: string;
+    stat?: boolean; // 是否展示统计
+}
+
 interface BasicStatSetting extends BaseStatSetting {
     type: "basic";
-    key: "account" | "server" | "school" | "gender" | "spirit" | "endurance" | "cd" | "cdRemark" | "remark";
+    key: "account" | "server" | "school" | "gender" | "spirit" | "endurance" | "cdRemark" | "remark";
     label: string;
 }
 
@@ -43,7 +50,12 @@ interface SkillStatSetting extends BaseStatSetting {
     level?: "number" | "levelLabel";
 }
 
-type StatSetting = BasicTeachStatSetting | BasicRoleStatSetting | BasicStatSetting | SkillStatSetting;
+type StatSetting =
+    | BasicCdStatSetting
+    | BasicTeachStatSetting
+    | BasicRoleStatSetting
+    | BasicStatSetting
+    | SkillStatSetting;
 
 interface StatTableDataRow {
     id: string;
