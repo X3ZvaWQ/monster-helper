@@ -1,7 +1,21 @@
 <template>
     <div class="p-stat" ref="pageEl">
         <div class="m-toolbar">
-            <n-flex>
+            <n-input v-model:value="search" placeholder="搜索" clearable>
+                <template #suffix>
+                    <n-tooltip>
+                        <template #trigger>
+                            <i-material-symbols:info-rounded />
+                        </template>
+                        <n-el tag="p">有人说想要搜索能传功指定boss的角色</n-el>
+                        <n-el tag="p">我寻思确实有必要，于是有了这个想做成 omni search 的输入框</n-el>
+                        <n-el tag="p">但是一时间除了传功不知道搜点啥，有什么想法可以提反馈</n-el>
+                        <n-el tag="p">这里输入boss的名称或者拼音首字母即可过滤可传该boss技能的角色</n-el>
+                        <n-el tag="p">（默认7重，可以通过在列展示可传功调整最小显示等级来修改）</n-el>
+                    </n-tooltip>
+                </template>
+            </n-input>
+            <n-flex :wrap="false">
                 <n-button @click="openSetting" type="primary">表格配置</n-button>
                 <n-popconfirm @positive-click="useRoleStore().resetCd()">
                     <template #trigger>
@@ -15,7 +29,7 @@
             <n-data-table
                 :max-height="maxHeight"
                 :columns="columns"
-                :data="data"
+                :data="filterData"
                 :bordered="true"
                 :scroll-x="tableWidth"
                 :on-unstable-column-resize="onColumnResize"
@@ -31,7 +45,7 @@ import RoleDetailDialog from "@/components/role/RoleDetailDialog.vue";
 import StatSetting from "@/components/stat/Setting.vue";
 import TeachList from "@/components/role/TeachList.vue";
 
-import { skillLevelLabel } from "@/assets/data/game";
+import { bossList, skillLevelLabel } from "@/assets/data/game";
 import { useGameStore } from "@/store/game";
 import { useRoleStore } from "@/store/role";
 import { useSettingStore } from "@/store/setting";
@@ -41,6 +55,9 @@ import { DataTableColumns } from "naive-ui";
 import { TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
 import { CSSProperties } from "vue";
 import { useResizeObserver } from "@vueuse/core";
+import { matchSearch } from "@/utils/search";
+
+const search = ref("");
 
 const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) => {
     const settingColumn = useSettingStore().stat.columns.find(
@@ -104,7 +121,7 @@ const columns = computed(() => {
                 } else if (a[key] === null || a[key] === undefined) {
                     return 1;
                 } else if (b[key] === null || b[key] === undefined) {
-                    return -1; 
+                    return -1;
                 }
             },
             minWidth: 1,
@@ -322,6 +339,21 @@ const data = computed(() => {
     }
     return result;
 });
+const filterData = computed(() => {
+    if (!search.value) return data.value;
+    const searchBosses = bossList.filter((boss) => matchSearch(search.value, boss.searchKey));
+    const column = useSettingStore().stat.columns.find((item) => item.type === "basic" && item.key === "teach");
+    const teachMinLevel = column?.minLevel || 7;
+    return data.value.filter((row) => {
+        if (!searchBosses.length) return true;
+        // 如果有匹配到的boss，仅展示这些boss之中可传功等级为「表格配置内的传功最小显示等级」的角色
+        const hasTeach = row.teach.some(([level, bosses]: [number, string[]]) => {
+            return searchBosses.some((boss) => bosses.includes(boss.name)) && level >= teachMinLevel;
+        });
+        if (!hasTeach) return false;
+        return true;
+    });
+});
 
 const settingPanel = ref<InstanceType<typeof StatSetting> | null>(null);
 const openSetting = () => {
@@ -375,6 +407,7 @@ useResizeObserver(tableWrapperRef, (entries) => {
         justify-content: flex-end;
         position: sticky;
         top: 0;
+        gap: 12px;
     }
 
     .n-data-table {

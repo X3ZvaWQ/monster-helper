@@ -1,3 +1,5 @@
+import { getSearchKey } from "@/utils/search";
+
 export const bookIconId = [245, 92, 241, 244, 388] as const;
 
 /**
@@ -34,7 +36,7 @@ export const skillLevelLabel = [
  * alias: boss别名
  * skillAlias: 技能表里boss的名称
  */
-export const bossList = [
+const _bossList = [
     {
         name: "卫栖梧",
         alias: ["老卫"],
@@ -191,6 +193,10 @@ export const bossList = [
         skillAlias: "公孙二娘",
     },
 ] as const;
+export const bossList = _bossList.map((boss) => ({
+    ...boss,
+    searchKey: getSearchKey(boss.name, ...boss.alias),
+}));
 
 export type BossName = (typeof bossList)[number]["name"];
 
