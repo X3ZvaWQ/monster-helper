@@ -20,6 +20,16 @@
                     </template>
                     <n-text> 该操作会重置你所有的配置（目前主要是统计表格列配置，不包括角色数据） </n-text>
                 </n-popconfirm>
+                <n-popconfirm @positive-click="onResetGameData">
+                    <template #trigger>
+                        <n-button secondary type="warning"> 清理游戏数据 </n-button>
+                    </template>
+                    <n-text>
+                        该操作会清空游戏数据（百战总共有哪些技能这些），不会影响其他设置。<br />
+                        如果游戏更新了新技能但是软件没显示可以尝试清空重新加载~<br />
+                        默认情况下这些数据会6小时更新一次。
+                    </n-text>
+                </n-popconfirm>
             </n-flex>
             <n-h6 prefix="bar">别名配置</n-h6>
             <n-alert title="占位" type="info">
@@ -57,6 +67,7 @@ import ImportDialog from "@/components/setting/ImportDialog.vue";
 import { useSettingStore } from "@/store/setting";
 import { version } from "../../package.json";
 import { useCheckUpdate } from "@/utils/use/update";
+import { useGameStore } from "@/store/game";
 
 const message = useMessage();
 const exportDialog = ref<InstanceType<typeof ExportDialog> | null>(null);
@@ -64,6 +75,10 @@ const importDialog = ref<InstanceType<typeof ImportDialog> | null>(null);
 
 const onResetSetting = () => {
     useSettingStore().$reset();
+};
+const onResetGameData = () => {
+    useGameStore().$reset();
+    location.reload();
 };
 
 const notification = useNotification();

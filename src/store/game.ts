@@ -5,15 +5,20 @@ import { SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
 
 export const useGameStore = defineStore("game", {
     state: () => ({
+        lastUpdatedAt: 0, // 上次更新游戏数据的时间戳
+
         books: [] as MonsterSkillBook[],
         bookMap: {} as Record<number, MonsterSkillBook[]>,
         skills: [] as MonsterSkill[],
         skillMap: {} as Record<number, MonsterSkill>,
     }),
     actions: {
-        fetchSkills() {
-            if(this.skills.length) return; // 如果技能已经加载过了，就不再加载
-            getMonsterSkills().then((res) => {
+        async fetchSkills() {
+            // 6小时以内加载过切skills长度不为0，就不再加载
+            if (this.lastUpdatedAt && this.lastUpdatedAt + 6 * 60 * 60 * 1000 > Date.now() && this.skills.length) {
+                return; // 如果技能已经加载过了，就不再加载
+            }
+            await getMonsterSkills().then((res) => {
                 this.skills = res;
                 this.skillMap = keyBy(res, "id");
             });
@@ -24,6 +29,7 @@ export const useGameStore = defineStore("game", {
                     skill.books = this.bookMap[skill.id] || [];
                 }
             });
+            this.lastUpdatedAt = Date.now();
         },
         getSkillById(id: number) {
             return this.skillMap[id] || null;
