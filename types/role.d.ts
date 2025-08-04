@@ -8,7 +8,7 @@ interface Role {
     schoolId: SchoolIds | null;
     gender: Gender;
     skills: RoleSkill[];
-    inventory: InventoryItem[];
+    inventory: SkillBook[];
     // 角色备注
     remark?: string;
     // 本周进度
@@ -27,3 +27,5 @@ interface RoleSkill {
 interface InventoryItem {
     itemId: number;
 }
+
+interface SkillBook extends RoleSkill {}

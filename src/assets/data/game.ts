@@ -30,6 +30,8 @@ export const skillLevelLabel = [
     "二十重",
 ] as const;
 
+export type SkillLevelLabel = (typeof skillLevelLabel)[number];
+
 /**
  * boss列表
  * name: boss名称

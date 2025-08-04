@@ -8,6 +8,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    BookList: typeof import('./../src/components/role/BookList.vue')['default']
+    BookParse: typeof import('./../src/components/role/BookParse.vue')['default']
     EditableValue: typeof import('./../src/components/common/EditableValue.vue')['default']
     ExportDialog: typeof import('./../src/components/setting/ExportDialog.vue')['default']
     FileSelect: typeof import('./../src/components/common/FileSelect.vue')['default']

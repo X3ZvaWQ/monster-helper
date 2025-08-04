@@ -51,15 +51,20 @@
                     <div v-else class="m-empty">暂未记录技能，点击上方按钮更新技能列表</div>
                     <p class="m-section-title">
                         <n-text>角色背包</n-text>
-                        <n-button text type="primary" class="u-edit" size="small">
+                        <n-button text type="primary" class="u-edit" size="small" @click="onUpdateBooks">
                             <template #icon>
                                 <i-material-symbols:edit-rounded />
                             </template>
                         </n-button>
                     </p>
-                    <div v-if="role.inventory.length" class="m-role-inventory"></div>
+                    <book-list
+                        :books="role.inventory"
+                        v-if="role.inventory.length"
+                        class="m-role-inventory"
+                    ></book-list>
+
                     <div v-else class="m-empty">
-                        暂未记录仓库，点击上方按钮更新仓库列表（其实还在做）<br />
+                        暂未记录仓库，点击上方按钮更新仓库列表<br />
                         仓库记录主要是为了精耐规划以及后面计划的技能书需求功能~
                     </div>
                 </div>
@@ -152,9 +157,11 @@
         </template>
     </n-modal>
     <skill-parse ref="skillParse" />
+    <book-parse ref="bookParse" />
 </template>
 
 <script setup lang="ts">
+import BookParse from "./BookParse.vue";
 import SkillList from "./SkillList.vue";
 import SkillParse from "./SkillParse.vue";
 import EditableValue from "../common/EditableValue.vue";
@@ -180,6 +187,16 @@ const onUpdateSkills = async () => {
 const router = useRouter();
 const onGoBossStat = () => {
     router.push({ name: "stat-boss", params: { roleId: roleId.value } });
+};
+const bookParse = ref<InstanceType<typeof BookParse> | null>(null);
+const onUpdateBooks = async () => {
+    if (!bookParse.value) return;
+    try {
+        const books = await bookParse.value.open();
+        useRoleStore().updateRole(roleId.value, { inventory: books });
+    } catch (error) {
+        console.error("仓库更新失败:", error);
+    }
 };
 
 // 对话框打开/关闭逻辑
@@ -305,12 +322,10 @@ defineExpose({
         padding: 12px 0;
     }
     .m-role-skills {
-        max-height: 240px;
+        max-height: 220px;
     }
     .m-role-inventory {
-        border-radius: 8px;
-        border: 1px solid #e8e8e8;
-        min-height: 240px;
+        max-height: 200px;
     }
     .m-role-detail-content {
         display: flex;
@@ -334,7 +349,7 @@ defineExpose({
         }
     }
     .m-teach-list {
-        max-height: 160px;
+        max-height: 280px;
         overflow-y: auto;
         .scrollbar;
     }

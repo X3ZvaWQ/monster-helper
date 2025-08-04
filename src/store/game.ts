@@ -8,7 +8,7 @@ export const useGameStore = defineStore("game", {
         lastUpdatedAt: 0, // 上次更新游戏数据的时间戳
 
         books: [] as MonsterSkillBook[],
-        bookMap: {} as Record<number, MonsterSkillBook[]>,
+        bookMap: {} as Record<number, Record<number, MonsterSkillBook>>,
         skills: [] as MonsterSkill[],
         skillMap: {} as Record<number, MonsterSkill>,
     }),
@@ -25,6 +25,9 @@ export const useGameStore = defineStore("game", {
             await getMonsterBooks().then((res) => {
                 this.books = Object.values(res);
                 this.bookMap = groupBy(this.books, "skillId");
+                for (const key in this.bookMap) {
+                    this.bookMap[key] = keyBy(this.bookMap[key], "level");
+                }
                 for (const skill of this.skills) {
                     skill.books = this.bookMap[skill.id] || [];
                 }
@@ -38,6 +41,12 @@ export const useGameStore = defineStore("game", {
             const levelString = skillLevelLabel.slice(1).join("");
             const skillName = this.skills.map((s) => s.name).join("");
             return [...new Set((levelString + skillName).split(""))];
+        },
+        getBooksCharWhiteList() {
+            const levelString = skillLevelLabel.slice(1).join("");
+            const skillName = this.skills.map((s) => s.name).join("");
+            const extra = "[:0123456789]:你获得: [《变招式要诀·》()]。";
+            return [...new Set((levelString + skillName + extra).split(""))];
         },
         getSkillsFromOcrResult(ocrResult: OcrResultItem[]) {
             const result: RoleSkill[] = [];
@@ -97,6 +106,22 @@ export const useGameStore = defineStore("game", {
                 }
             }
             return result;
+        },
+        getBooksFromOcrResult(ocrResult: OcrResultItem[]) {
+            const books: SkillBook[] = [];
+            for (const item of ocrResult) {
+                const match = item.text.match(/《(.+·)?(.+?)》.+·(.+重)(\(.+\))?/);
+                if (!match) continue; // 如果没有匹配到，跳过
+                const [, , skillName, levelLabel] = match;
+                const id = this.skills.find((s) => s.name === skillName)?.id;
+                const level = skillLevelLabel.indexOf(levelLabel as SkillLevelLabel);
+                if (!id || level === -1) continue; // 如果没有找到技能ID或等级，跳过
+                books.push({
+                    id,
+                    level,
+                });
+            }
+            return books;
         },
     },
 });
