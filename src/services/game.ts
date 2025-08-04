@@ -65,3 +65,21 @@ export const getMonsterSkills = async () => {
             return skills;
         });
 };
+
+export interface MonsterSkillBook {
+    itemId: number;
+    itemQuality: 3 | 4;
+    skillName: string;
+    skillId: number;
+    iconId: number;
+    itemName: string;
+    isDirectUpgrade: 0 | 1;
+    level: number;
+}
+export const getMonsterBooks = async () => {
+    return fetch(`${url.node}/monster/books`)
+        .then((res) => res.json())
+        .then((res) => {
+            return res.data as ResponseData<MonsterSkillBook>;
+        });
+};

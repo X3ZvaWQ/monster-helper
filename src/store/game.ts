@@ -1,10 +1,12 @@
-import { getMonsterSkills } from "@/services/game";
+import { getMonsterBooks, getMonsterSkills, MonsterSkillBook } from "@/services/game";
 import { distance } from "fastest-levenshtein";
-import { keyBy } from "lodash";
-import { skillLevelLabel } from "@/assets/data/game";
+import { groupBy, keyBy } from "lodash";
+import { SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
 
 export const useGameStore = defineStore("game", {
     state: () => ({
+        books: [] as MonsterSkillBook[],
+        bookMap: {} as Record<number, MonsterSkillBook[]>,
         skills: [] as MonsterSkill[],
         skillMap: {} as Record<number, MonsterSkill>,
     }),
@@ -14,6 +16,13 @@ export const useGameStore = defineStore("game", {
             getMonsterSkills().then((res) => {
                 this.skills = res;
                 this.skillMap = keyBy(res, "id");
+            });
+            await getMonsterBooks().then((res) => {
+                this.books = Object.values(res);
+                this.bookMap = groupBy(this.books, "skillId");
+                for (const skill of this.skills) {
+                    skill.books = this.bookMap[skill.id] || [];
+                }
             });
         },
         getSkillById(id: number) {
