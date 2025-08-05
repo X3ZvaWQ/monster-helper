@@ -26,7 +26,6 @@ const renderBookItem = computed(() => {
     const result: MonsterSkillBook[] = [];
     for (const book of props.books) {
         const skillBook = useGameStore().bookMap[book.id][book.level];
-        console.log(`技能书：${book.id}_${book.level} => ${skillBook?.itemName}`);
         if (!skillBook) continue;
         result.push(skillBook);
     }

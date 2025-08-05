@@ -83,7 +83,6 @@ onmessage = async (event) => {
             }
         );
         postMessage({ id, type: "skill", data: { msg: "OCR结果已返回" } });
-        console.log("OCR结果", ocrResult);
         postMessage({ id, type: "skill", data: { result: ocrResult } });
         console.timeEnd("OCR服务识别技能图片");
     }

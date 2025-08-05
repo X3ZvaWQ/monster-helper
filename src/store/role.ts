@@ -9,6 +9,26 @@ import {
 import { useGameStore } from "./game";
 import { chain, sum } from "lodash";
 
+interface SpiritAndEnduranceCalcResult {
+    spirit: number;
+    endurance: number;
+    teach: string[][];
+    threeSkillSpiritEndurance: number;
+    bossSpiritEndurance: Record<
+        string,
+        {
+            spirit: number;
+            endurance: number;
+            collectLevel: number;
+            collectCount: number;
+            collectTotal: number;
+        }
+    >;
+}
+const spiritAndEnduranceCache = new Map<string, ComputedRef<SpiritAndEnduranceCalcResult>>();
+
+const skillLevelMapCache = new Map<string, ComputedRef<Record<number, number>>>();
+
 export const useRoleStore = defineStore("role", {
     state: () => ({
         roles: [] as Role[],
@@ -35,11 +55,19 @@ export const useRoleStore = defineStore("role", {
         getRoleById(id: string) {
             return this.roles.find((r) => r.id === id);
         },
-        getSkillLevelMap(role: Role): Record<number, number> {
-            return chain(role.skills).keyBy("id").mapValues("level").value();
+        _getSkillLevelMap(role: Role): ComputedRef<Record<number, number>> {
+            return computed(() => chain(role.skills).keyBy("id").mapValues("level").value());
         },
-        calcSpiritAndEndurance(role: Role) {
-            let result = {
+        getSkillLevelMap(role: Role): ComputedRef<Record<number, number>> {
+            if (skillLevelMapCache.has(role.id!)) {
+                return skillLevelMapCache.get(role.id!)!;
+            }
+            const result = this._getSkillLevelMap(role);
+            skillLevelMapCache.set(role.id!, result);
+            return result;
+        },
+        _calcSpiritAndEndurance(role: Role): SpiritAndEnduranceCalcResult {
+            let result: SpiritAndEnduranceCalcResult = {
                 spirit: 10000,
                 endurance: 10000,
                 teach: Array.from({ length: 11 }, () => []) as string[][],
@@ -73,7 +101,7 @@ export const useRoleStore = defineStore("role", {
             }
             result.threeSkillSpiritEndurance = result.spirit;
             // 2. boss 全收集精耐
-            const skillIdMap = this.getSkillLevelMap(role);
+            const skillIdMap = this.getSkillLevelMap(role).value;
             for (const { boss, coef } of bossSpiritEnduranceCoef) {
                 let bossSpirit = 0;
                 let bossEndurance = 0;
@@ -131,6 +159,14 @@ export const useRoleStore = defineStore("role", {
                 }
             }
 
+            return result;
+        },
+        calcSpiritAndEndurance(role: Role) {
+            if (spiritAndEnduranceCache.has(role.id!)) {
+                return spiritAndEnduranceCache.get(role.id!)!;
+            }
+            const result = computed(() => this._calcSpiritAndEndurance(role));
+            spiritAndEnduranceCache.set(role.id!, result);
             return result;
         },
     },

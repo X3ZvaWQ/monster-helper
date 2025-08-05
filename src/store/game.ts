@@ -95,7 +95,6 @@ export const useGameStore = defineStore("game", {
                                     id: skillMap[name].id,
                                     level: currentLevel,
                                 });
-                                console.log(`${ocrSkillName} => ${name}`);
                                 delete skillMap[name]; // 删除包含的技能
                                 founded = true;
                                 break; // 找到一个匹配的就可以了

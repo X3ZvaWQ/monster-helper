@@ -128,7 +128,7 @@ const role = computed(() => {
 });
 const calcResult = computed(() => {
     if (!role.value) return null;
-    return useRoleStore().calcSpiritAndEndurance(role.value);
+    return useRoleStore().calcSpiritAndEndurance(role.value).value;
 });
 const listData = computed(() => {
     if (!role.value || !calcResult.value) return null;
@@ -177,7 +177,7 @@ const listData = computed(() => {
             }
         }
 
-        const skillLevelMap = useRoleStore().getSkillLevelMap(role.value!);
+        const skillLevelMap = useRoleStore().getSkillLevelMap(role.value!).value;
         for (const skill of skills) {
             item.skillList.push({
                 id: skill.id,

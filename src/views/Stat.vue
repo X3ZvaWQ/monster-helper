@@ -294,7 +294,6 @@ const columns = computed(() => {
                 );
             },
         } as TableColumn<StatTableDataRow>;
-        // 可传功技能需要tooltip
 
         column.width = item.width || 100;
         if (item.fixed) column.fixed = item.fixed;
@@ -307,7 +306,7 @@ const data = computed(() => {
     const roles = useRoleStore().roles;
     const result: any[] = [];
     for (const role of roles) {
-        const { spirit, endurance, teach } = useRoleStore().calcSpiritAndEndurance(role);
+        const { spirit, endurance, teach } = useRoleStore().calcSpiritAndEndurance(role).value;
         const row: StatTableDataRow = {
             id: role.id!,
             account: role.account,
@@ -335,7 +334,7 @@ const data = computed(() => {
         }
 
         for (const column of useSettingStore().stat.columns) {
-            const levelMap = useRoleStore().getSkillLevelMap(role);
+            const levelMap = useRoleStore().getSkillLevelMap(role).value;
             if (column.type === "skill") {
                 row[`skill-${column.skillId}`] = levelMap[column.skillId] || 0;
             }
