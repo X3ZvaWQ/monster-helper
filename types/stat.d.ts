@@ -72,5 +72,6 @@ interface StatTableDataRow {
     remark: string;
     teach: [number, string[]][];
     [key: `skill-${number}`]: number;
+    [key: `skill-book-${number}`]: number[];
     default: "-";
 }

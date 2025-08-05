@@ -275,6 +275,7 @@ const columns = computed(() => {
                     }
                 } else if (item.type === "skill") {
                     const skillLevel = row[`skill-${item.skillId}`] || 0;
+
                     divContent.push(
                         h(
                             resolveComponent("n-text"),
@@ -282,6 +283,35 @@ const columns = computed(() => {
                             { default: () => (item.level === "levelLabel" ? skillLevelLabel[skillLevel] : skillLevel) }
                         )
                     );
+                    if (row[`skill-book-${item.skillId}`] && row[`skill-book-${item.skillId}`].length > 0) {
+                        divContent.push(
+                            h(
+                                resolveComponent("n-tooltip"),
+                                {
+                                    trigger: "hover",
+                                    placement: "top",
+                                    showArrow: true,
+                                },
+                                {
+                                    default: () =>
+                                        h(
+                                            resolveComponent("n-text"),
+                                            { style: getStyle(item) },
+                                            {
+                                                default: () =>
+                                                    `包里有书：${row[`skill-book-${item.skillId}`]
+                                                        .map((l) => skillLevelLabel[l])
+                                                        .join(", ")}`,
+                                            }
+                                        ),
+                                    trigger: () =>
+                                        h(resolveComponent("i-mingcute:alert-diamond-fill"), {
+                                            class: "u-skill-book-tip",
+                                        }),
+                                }
+                            )
+                        );
+                    }
                 }
                 return h(
                     resolveComponent("n-flex"),
@@ -333,10 +363,22 @@ const data = computed(() => {
             row.teach.sort((a, b) => b[0] - a[0]);
         }
 
+        const levelMap = useRoleStore().getSkillLevelMap(role).value;
+        const bookMap = useRoleStore().getBookMap(role).value;
         for (const column of useSettingStore().stat.columns) {
-            const levelMap = useRoleStore().getSkillLevelMap(role).value;
             if (column.type === "skill") {
-                row[`skill-${column.skillId}`] = levelMap[column.skillId] || 0;
+                const skillLevel = levelMap[column.skillId] || 0;
+                row[`skill-${column.skillId}`] = skillLevel;
+                row[`skill-book-${column.skillId}`] = [];
+                if (bookMap[column.skillId]) {
+                    const hasHigherBookLevel = Object.keys(bookMap[column.skillId])
+                        .map(Number)
+                        .filter((level) => level > skillLevel)
+                        .sort((a, b) => a - b);
+                    if (hasHigherBookLevel.length > 0) {
+                        row[`skill-book-${column.skillId}`].push(...hasHigherBookLevel);
+                    }
+                }
             }
         }
 
@@ -418,7 +460,6 @@ useResizeObserver(tableWrapperRef, (entries) => {
         }
 
         .n-data-table-td {
-            // 循环 0~20
             .loop-level-bg(@i: 0) when (@i <= 20) {
                 &:has(.level-@{i}) {
                     background-color: ~"var(--skill-level-@{i}-bg)" !important;
@@ -426,6 +467,21 @@ useResizeObserver(tableWrapperRef, (entries) => {
                 .loop-level-bg(@i + 1);
             }
             .loop-level-bg();
+        }
+
+        @keyframes bookTip {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .u-skill-book-tip {
+            animation: bookTip 0.25s infinite;
         }
     }
 
