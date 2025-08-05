@@ -40,6 +40,7 @@ declare module 'vue' {
     'IMdi:chartArc': typeof import('~icons/mdi/chart-arc')['default']
     'IMdi:github': typeof import('~icons/mdi/github')['default']
     'IMdi:user': typeof import('~icons/mdi/user')['default']
+    'IMingcute:alertDiamondFill': typeof import('~icons/mingcute/alert-diamond-fill')['default']
     'IMingcute:qqFill': typeof import('~icons/mingcute/qq-fill')['default']
     ImportDialog: typeof import('./../src/components/setting/ImportDialog.vue')['default']
     'IOoui:draggable': typeof import('~icons/ooui/draggable')['default']

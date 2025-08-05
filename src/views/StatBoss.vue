@@ -24,7 +24,7 @@
                                         <i-material-symbols:info />
                                     </n-icon>
                                 </template>
-                               如果某个首领的技能等级都大于该重数，则认为是已收集首领
+                                如果某个首领的技能等级都大于该重数，则认为是已收集首领
                             </n-tooltip>
                         </n-text>
                         <n-input-number
@@ -96,7 +96,19 @@
                                 :preview-disabled="true"
                                 :src="iconLink(useGameStore().getSkillById(skill.id)?.icon)"
                             ></n-image>
-                            <n-text class="u-name">{{ useGameStore().getSkillById(skill.id)?.name }}</n-text>
+                            <n-text class="u-name">
+                                <n-tooltip v-if="skill.book.length > 0" placement="top">
+                                    <template #trigger>
+                                        <n-icon class="u-book-tip">
+                                            <i-mingcute:alert-diamond-fill />
+                                        </n-icon>
+                                    </template>
+                                    <div class="m-boss-skill__tooltip">
+                                        包里有书：{{ skill.book.map((l) => skillLevelLabel[l]).join("、") }}
+                                    </div>
+                                </n-tooltip>
+                                {{ useGameStore().getSkillById(skill.id)?.name }}
+                            </n-text>
                         </div>
                     </n-flex>
                 </n-card>
@@ -178,15 +190,28 @@ const listData = computed(() => {
         }
 
         const skillLevelMap = useRoleStore().getSkillLevelMap(role.value!).value;
+        const bookMap = useRoleStore().getBookMap(role.value!).value;
         for (const skill of skills) {
-            item.skillList.push({
+            const skillLevel = skillLevelMap[skill.id] || 0;
+            const skillItem = {
                 id: skill.id,
-                level: skillLevelMap[skill.id] || 0,
-                book: [],
+                level: skillLevel,
+                book: [] as number[],
                 isExtra: noSpiritEnduranceSkills.has(skill.id),
                 isAddon: noThreeLevelSpiritEnduranceSkills.has(skill.id),
                 searchKey: getSearchKey(skill.name),
-            });
+            };
+            if (bookMap[skill.id]) {
+                const hasHigherBookLevel = Object.keys(bookMap[skill.id])
+                    .map(Number)
+                    .filter((level) => level > skillLevel)
+                    .sort((a, b) => a - b);
+                if (hasHigherBookLevel.length > 0) {
+                    skillItem.book = hasHigherBookLevel;
+                }
+            }
+
+            item.skillList.push(skillItem);
         }
         item.skillList = orderBy(item.skillList, (s) => s.level, "desc");
         result.push(item);
@@ -212,16 +237,22 @@ const renderData = computed(() => {
         });
     }
     if (!searchValue.value) return result;
-    // 筛选
-    result = result.map((boss) => {
-        boss.skillList = boss.skillList.filter((skill) => matchSearch(searchValue.value, skill.searchKey));
-        return boss;
-    });
-    // 技能组为空且boss本身没有匹配到则过滤掉
-    result = result.filter((item) => {
-        return item.skillList.length > 0 || matchSearch(searchValue.value, item.searchKey);
-    });
 
+    result = result.map((item) => {
+        if (matchSearch(searchValue.value, item.searchKey)) {
+            return item;
+        }
+
+        const skillList = item.skillList.filter((skill) => matchSearch(searchValue.value, skill.searchKey));
+        if (skillList.length > 0) {
+            return {
+                ...item,
+                skillList,
+            };
+        }
+        return null;
+    }) as ListItem[];
+    result = result.filter((item) => item !== null) as ListItem[];
     return result;
 });
 
@@ -325,7 +356,6 @@ onMounted(() => {
             // 黑色轮廓
             text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;
             color: white;
-            
         }
 
         .u-name {
@@ -334,6 +364,32 @@ onMounted(() => {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .u-book-tip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            flex-shrink: 0;
+            font-size: 16px;
+            color: white;
+            animation: bookTip 0.25s infinite;
+            text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;
+        }
+
+        @keyframes bookTip {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.3);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
     }
 }

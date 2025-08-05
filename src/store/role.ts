@@ -7,7 +7,7 @@ import {
     threeLevelSpiritEndurance,
 } from "@/assets/data/game";
 import { useGameStore } from "./game";
-import { chain, sum } from "lodash";
+import { chain, countBy, sum } from "lodash";
 
 interface SpiritAndEnduranceCalcResult {
     spirit: number;
@@ -28,6 +28,7 @@ interface SpiritAndEnduranceCalcResult {
 const spiritAndEnduranceCache = new Map<string, ComputedRef<SpiritAndEnduranceCalcResult>>();
 
 const skillLevelMapCache = new Map<string, ComputedRef<Record<number, number>>>();
+const roleBookMapCache = new Map<string, ComputedRef<Record<number, Record<number, number>>>>();
 
 export const useRoleStore = defineStore("role", {
     state: () => ({
@@ -64,6 +65,26 @@ export const useRoleStore = defineStore("role", {
             }
             const result = this._getSkillLevelMap(role);
             skillLevelMapCache.set(role.id!, result);
+            return result;
+        },
+        _getBookMap(role: Role): ComputedRef<Record<number, Record<number, number>>> {
+            return computed(() => {
+                const books = countBy(role.inventory.map((item) => `${item.id}-${item.level}`));
+                const bookMap: Record<number, Record<number, number>> = {};
+                for (const [key, count] of Object.entries(books)) {
+                    const [id, level] = key.split("-").map(Number);
+                    if (!bookMap[id]) bookMap[id] = {};
+                    bookMap[id][level] = (bookMap[id][level] || 0) + count;
+                }
+                return bookMap;
+            });
+        },
+        getBookMap(role: Role): ComputedRef<Record<number, Record<number, number>>> {
+            if (roleBookMapCache.has(role.id!)) {
+                return roleBookMapCache.get(role.id!)!;
+            }
+            const result = this._getBookMap(role);
+            roleBookMapCache.set(role.id!, result);
             return result;
         },
         _calcSpiritAndEndurance(role: Role): SpiritAndEnduranceCalcResult {
