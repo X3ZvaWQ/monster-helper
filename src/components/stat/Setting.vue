@@ -234,6 +234,28 @@
                             </n-flex>
                         </div>
                     </n-flex>
+                    <n-h6 prefix="bar">
+                        <n-flex :align="'center'">
+                            <n-el tag="span">背景颜色</n-el>
+                            <n-tooltip>
+                                <template #trigger>
+                                    <i-material-symbols:info-outline class="text-xs" />
+                                </template>
+                                <n-el tag="p">根据技能等级显示不同的背景颜色</n-el>
+                            </n-tooltip>
+                        </n-flex>
+                    </n-h6>
+                    <n-dynamic-input
+                        v-model:value="useSettingStore().stat.background"
+                        :on-create="() => ({ level: null, color: '' })"
+                    >
+                        <template #default="{ value }">
+                            <div style="display: flex; align-items: center; width: 100%">
+                                <n-input-number v-model:value="value.level" style="margin-right: 12px; width: 160px" />
+                                <n-color-picker v-model:value="value.color" size="small" />
+                            </div>
+                        </template>
+                    </n-dynamic-input>
                 </n-tab-pane>
             </n-tabs>
         </n-drawer-content>
@@ -247,7 +269,6 @@ import { useGameStore } from "@/store/game";
 import { VueDraggable } from "vue-draggable-plus";
 import { iconLink } from "@/utils/game";
 import type { CSSProperties } from "vue";
-
 
 // 基础信息选择项
 const basicSelects = ref([

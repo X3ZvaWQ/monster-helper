@@ -25,7 +25,7 @@
                 </n-popconfirm>
             </n-flex>
         </div>
-        <div class="m-data" ref="tableWrapperRef">
+        <div class="m-data" ref="tableWrapperRef" :style="tableStyle">
             <n-data-table
                 :max-height="maxHeight"
                 :columns="columns"
@@ -278,7 +278,7 @@ const columns = computed(() => {
                     divContent.push(
                         h(
                             resolveComponent("n-text"),
-                            { style: getStyle(item) },
+                            { style: getStyle(item), class: `level-${skillLevel} u-skill-level` },
                             { default: () => (item.level === "levelLabel" ? skillLevelLabel[skillLevel] : skillLevel) }
                         )
                     );
@@ -359,6 +359,14 @@ const filterData = computed(() => {
         return true;
     });
 });
+const tableStyle = computed((): CSSProperties => {
+    return useSettingStore().stat.background.reduce((style, item) => {
+        if (item.level !== null) {
+            style[`--skill-level-${item.level}-bg`] = item.color;
+        }
+        return style;
+    }, {} as CSSProperties);
+});
 
 const settingPanel = ref<InstanceType<typeof StatSetting> | null>(null);
 const openSetting = () => {
@@ -404,6 +412,20 @@ useResizeObserver(tableWrapperRef, (entries) => {
                 width: 20px;
                 height: 20px;
             }
+        }
+        .n-data-table-td:has(.u-skill-level) {
+            text-align: center;
+        }
+
+        .n-data-table-td {
+            // 循环 0~20
+            .loop-level-bg(@i: 0) when (@i <= 20) {
+                &:has(.level-@{i}) {
+                    background-color: ~"var(--skill-level-@{i}-bg)" !important;
+                }
+                .loop-level-bg(@i + 1);
+            }
+            .loop-level-bg();
         }
     }
 

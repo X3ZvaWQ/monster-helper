@@ -17,6 +17,16 @@ export const useSettingStore = defineStore("setting", {
                 fontSize: null as number | null,
                 fontWeight: null as number | null,
             },
+            background: [
+                {
+                    level: 10,
+                    color: "#FC9C2D8A",
+                },
+                {
+                    level: 9,
+                    color: "#9A11988A",
+                },
+            ] as { level: number | null; color: string }[],
         },
         statBoss: {
             collectLevel: 9 as number, // 收集等级

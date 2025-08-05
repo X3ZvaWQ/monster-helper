@@ -220,7 +220,7 @@ const role = computed(() => {
     return useRoleStore().roles.find((item) => item.id === roleId.value)! || cloneDeep(defaultRole);
 });
 const spiritEndurance = computed(() => {
-    return useRoleStore().calcSpiritAndEndurance(role.value);
+    return useRoleStore().calcSpiritAndEndurance(role.value).value;
 });
 const teachList = computed(() => {
     const result: [number, string[]][] = [];
