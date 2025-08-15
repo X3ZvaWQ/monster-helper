@@ -294,16 +294,9 @@ const columns = computed(() => {
                                 },
                                 {
                                     default: () =>
-                                        h(
-                                            resolveComponent("n-text"),
-                                            { style: getStyle(item) },
-                                            {
-                                                default: () =>
-                                                    `包里有书：${row[`skill-book-${item.skillId}`]
-                                                        .map((l) => skillLevelLabel[l])
-                                                        .join(", ")}`,
-                                            }
-                                        ),
+                                        `包里有书：${row[`skill-book-${item.skillId}`]
+                                            .map((l) => skillLevelLabel[l])
+                                            .join(", ")}`,
                                     trigger: () =>
                                         h(resolveComponent("i-mingcute:alert-diamond-fill"), {
                                             class: "u-skill-book-tip",
