@@ -1,9 +1,9 @@
 <template>
     <n-modal
         v-model:show="visible"
-        title="新建角色"
+        :title="isEdit ? '编辑角色' : '新建角色'"
         preset="dialog"
-        positive-text="创建"
+        positive-text="确定"
         negative-text="取消"
         :closable="true"
         :show-icon="false"
@@ -11,6 +11,9 @@
         @negative-click="visible = false"
     >
         <n-form ref="form" :model="formData" :rules="rules" label-placement="left" label-width="auto">
+            <n-form-item label="id" v-if="isEdit">
+                <n-input v-model:value="formData.id" disabled />
+            </n-form-item>
             <n-form-item label="账号" path="account">
                 <n-auto-complete
                     v-model:value="formData.account"
@@ -46,12 +49,16 @@
             <n-form-item label="角色名称" path="name">
                 <n-input v-model:value="formData.name" placeholder="输入角色名" />
             </n-form-item>
+
+            <n-form-item label="角色备注" path="remark">
+                <n-input v-model:value="formData.remark" placeholder="输入备注" />
+            </n-form-item>
         </n-form>
     </n-modal>
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, uniq } from "lodash";
+import { cloneDeep, pick, uniq } from "lodash";
 import { useRoleStore } from "../../store/role";
 import serverList from "@jx3box/jx3box-data/data/server/server_std.json";
 import mountMap from "@jx3box/jx3box-data/data/xf/school.json";
@@ -101,17 +108,30 @@ const rules: FormRules = {
 const onConfirm = () => {
     form.value?.validate((errors) => {
         if (!errors) {
-            const role = cloneDeep(formData.value);
-            role.id = nanoid();
-            useRoleStore().roles.push(role);
-            formData.value = cloneDeep(defaultRole);
-            visible.value = false;
+            if (!isEdit.value) {
+                const role = cloneDeep(formData.value);
+                role.id = nanoid();
+                useRoleStore().roles.push(role);
+                formData.value = cloneDeep(defaultRole);
+                visible.value = false;
+            } else {
+                const role = useRoleStore().getRoleById(formData.value.id!)!;
+                Object.assign(role, pick(formData.value, ["account", "server", "schoolId", "gender", "name", "remark"]));
+            }
         }
     });
 };
-const open = () => {
+const open = (role?: Role) => {
     visible.value = true;
+    if (role) {
+        formData.value = cloneDeep(role);
+    } else {
+        formData.value = cloneDeep(defaultRole);
+    }
 };
+const isEdit = computed(() => {
+    return !!formData.value.id;
+});
 
 const formData = ref(cloneDeep(defaultRole));
 

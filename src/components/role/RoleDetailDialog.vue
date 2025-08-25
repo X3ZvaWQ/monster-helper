@@ -17,7 +17,11 @@
                             <i-material-symbols:male-rounded v-if="role.gender === 'male'" />
                             <i-material-symbols:female-rounded v-else />
                         </n-text>
-                        <editable-value justify="flex-end" :value="role.remark!" @update:value="role.remark = $event" />
+                        <n-button text @click="onEditRoleInfo">
+                            <template #icon>
+                                <i-mdi:edit-outline />
+                            </template>
+                        </n-button>
                     </n-flex>
                 </div>
                 <div class="m-role-title">
@@ -165,6 +169,7 @@
     <skill-parse ref="skillParse" />
     <book-parse ref="bookParse" />
     <manual-edit ref="manualEdit" />
+    <role-create-dialog ref="roleCreateDialog" />
 </template>
 
 <script setup lang="ts">
@@ -174,6 +179,7 @@ import SkillParse from "./SkillParse.vue";
 import EditableValue from "../common/EditableValue.vue";
 import TeachList from "./TeachList.vue";
 import ManualEdit from "./ManualEditDialog.vue";
+import RoleCreateDialog from "./RoleCreateDialog.vue";
 
 import { useMessage } from "naive-ui";
 import { useRoleStore } from "../../store/role";
@@ -212,6 +218,12 @@ const manualEdit = ref<InstanceType<typeof ManualEdit> | null>(null);
 const onEditRole = () => {
     if (!manualEdit.value) return;
     manualEdit.value.open(roleId.value);
+};
+
+const roleCreateDialog = ref<InstanceType<typeof RoleCreateDialog> | null>(null);
+const onEditRoleInfo = () => {
+    if (!roleCreateDialog.value) return;
+    roleCreateDialog.value.open(role.value);
 };
 
 // 对话框打开/关闭逻辑

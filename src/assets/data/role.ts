@@ -6,4 +6,5 @@ export const defaultRole: Role = {
     gender: "female",
     skills: [],
     inventory: [],
+    remark: "",
 };
