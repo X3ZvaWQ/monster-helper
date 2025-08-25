@@ -14,7 +14,7 @@
         <div class="m-book-parse">
             <file-select v-if="!file" @select-file="file = $event">
                 <template #default>
-                    <n-text>选择或粘贴物品获得截图</n-text>
+                    <n-text>选择或粘贴截图</n-text>
                 </template>
             </file-select>
             <div class="m-parse-result">

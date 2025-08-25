@@ -36,9 +36,14 @@
                 <div class="m-left">
                     <p class="m-section-title">
                         <n-text>角色技能</n-text>
+                        <n-button text type="primary" class="u-edit" @click="onEditRole" size="small">
+                            <template #icon>
+                                <i-mdi:edit-outline />
+                            </template>
+                        </n-button>
                         <n-button text type="primary" class="u-edit" @click="onUpdateSkills" size="small">
                             <template #icon>
-                                <i-material-symbols:edit-rounded />
+                                <i-mdi:line-scan />
                             </template>
                         </n-button>
                         <n-button text type="primary" class="u-edit" @click="onGoBossStat" size="small">
@@ -53,7 +58,7 @@
                         <n-text>角色背包</n-text>
                         <n-button text type="primary" class="u-edit" size="small" @click="onUpdateBooks">
                             <template #icon>
-                                <i-material-symbols:edit-rounded />
+                                <i-mdi:line-scan />
                             </template>
                         </n-button>
                     </p>
@@ -158,6 +163,7 @@
     </n-modal>
     <skill-parse ref="skillParse" />
     <book-parse ref="bookParse" />
+    <manual-edit ref="manualEdit" />
 </template>
 
 <script setup lang="ts">
@@ -166,6 +172,7 @@ import SkillList from "./SkillList.vue";
 import SkillParse from "./SkillParse.vue";
 import EditableValue from "../common/EditableValue.vue";
 import TeachList from "./TeachList.vue";
+import ManualEdit from "./ManualEditDialog.vue";
 
 import { useMessage } from "naive-ui";
 import { useRoleStore } from "../../store/role";
@@ -197,6 +204,12 @@ const onUpdateBooks = async () => {
     } catch (error) {
         console.error("仓库更新失败:", error);
     }
+};
+
+const manualEdit = ref<InstanceType<typeof ManualEdit> | null>(null);
+const onEditRole = () => {
+    if (!manualEdit.value) return;
+    manualEdit.value.open(roleId.value);
 };
 
 // 对话框打开/关闭逻辑

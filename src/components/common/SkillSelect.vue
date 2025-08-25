@@ -1,14 +1,14 @@
 <template>
     <n-select
-        v-bind="$attrs"
         :options="props.options"
         filterable
         :filter="filter"
         max-tag-count="responsive"
-        multiple
+        :multiple="multiple"
         clearable
         :render-label="skillLabelRender"
-        :render-tag="skillSelectTag"
+        :render-tag="multiple ? multipleSkillSelectTag : singleSkillSelectTag"
+        v-bind="$attrs"
     ></n-select>
 </template>
 
@@ -22,6 +22,7 @@ import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 const props = withDefaults(
     defineProps<{
         options?: SelectMixedOption[];
+        multiple?: boolean;
     }>(),
     {
         options: () =>
@@ -33,6 +34,7 @@ const props = withDefaults(
                     search: getSearchKey(skill.name),
                 };
             }),
+        multiple: true,
     }
 );
 
@@ -62,7 +64,7 @@ const skillLabelRender: SelectRenderLabel = (option) => {
         ]
     );
 };
-const skillSelectTag: SelectRenderTag = ({ option, handleClose }) => {
+const multipleSkillSelectTag: SelectRenderTag = ({ option, handleClose }) => {
     return h(
         resolveComponent("n-tag"),
         {
@@ -83,6 +85,25 @@ const skillSelectTag: SelectRenderTag = ({ option, handleClose }) => {
                     src: iconLink(option.icon as number),
                     previewDisabled: true,
                 }),
+        }
+    );
+};
+const singleSkillSelectTag: SelectRenderTag = ({ option }) => {
+    return h(
+        resolveComponent("n-flex"),
+        {
+            align: "center",
+            size: 6,
+        },
+        {
+            default: () => [
+                h(resolveComponent("n-image"), {
+                    style: { width: "20px", height: "20px" },
+                    src: iconLink(option.icon as number),
+                    previewDisabled: true,
+                }),
+                option.label,
+            ],
         }
     );
 };
