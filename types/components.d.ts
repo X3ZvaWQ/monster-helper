@@ -20,6 +20,7 @@ declare module 'vue' {
     'IIc:roundClear': typeof import('~icons/ic/round-clear')['default']
     'IIconamoon:modeLight': typeof import('~icons/iconamoon/mode-light')['default']
     'IIconParkOutline:upC': typeof import('~icons/icon-park-outline/up-c')['default']
+    'ILetsIcons:ticketUse': typeof import('~icons/lets-icons/ticket-use')['default']
     'IMaterialSymbols:checkRounded': typeof import('~icons/material-symbols/check-rounded')['default']
     'IMaterialSymbols:copyAll': typeof import('~icons/material-symbols/copy-all')['default']
     'IMaterialSymbols:deleteRounded': typeof import('~icons/material-symbols/delete-rounded')['default']

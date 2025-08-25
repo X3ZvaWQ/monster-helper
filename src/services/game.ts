@@ -75,6 +75,7 @@ export interface MonsterSkillBook {
     itemName: string;
     isDirectUpgrade: 0 | 1;
     level: number;
+    count?: number;
 }
 export const getMonsterBooks = async () => {
     return fetch(`${url.node}/monster/books`)

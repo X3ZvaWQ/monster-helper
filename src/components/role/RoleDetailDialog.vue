@@ -66,6 +66,7 @@
                         :books="role.inventory"
                         v-if="role.inventory.length"
                         class="m-role-inventory"
+                        @use-book="onUseBook($event)"
                     ></book-list>
 
                     <div v-else class="m-empty">
@@ -179,6 +180,7 @@ import { useRoleStore } from "../../store/role";
 import { schoolIconLink } from "../../utils/game";
 import { cloneDeep } from "lodash";
 import { defaultRole } from "@/assets/data/role";
+import { MonsterSkillBook } from "@/services/game";
 
 // 更新技能列表逻辑
 const skillParse = ref<InstanceType<typeof SkillParse> | null>(null);
@@ -250,6 +252,12 @@ const teachList = computed(() => {
 const message = useMessage();
 const onPlanValue = () => {
     message.info("精耐提升规划功能正在开发中，敬请期待~");
+};
+const onUseBook = (book: MonsterSkillBook) => {
+    const { skillId, level } = book;
+    const role = useRoleStore().getRoleById(roleId.value)!;
+    const index = role.inventory.findIndex((b) => b.id === skillId && b.level === level);
+    role?.inventory.splice(index, 1);
 };
 
 defineExpose({

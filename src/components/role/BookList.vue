@@ -10,6 +10,12 @@
         >
             <img class="u-icon size-[24px]" :src="iconLink(book.iconId)" alt="" />
             <span class="u-name">{{ book.itemName }}</span>
+            <span class="u-count">x {{ book.count }}</span>
+            <n-button @click="emits('use-book', book)" text>
+                <template #icon>
+                    <i-lets-icons:ticket-use />
+                </template>
+            </n-button>
         </n-flex>
     </n-flex>
 </template>
@@ -18,19 +24,26 @@
 import { MonsterSkillBook } from "@/services/game";
 import { useGameStore } from "@/store/game";
 import { iconLink } from "@/utils/game";
+import { groupBy } from "lodash";
 
 const props = defineProps<{
     books: SkillBook[];
 }>();
 const renderBookItem = computed(() => {
     const result: MonsterSkillBook[] = [];
-    for (const book of props.books) {
+    const bookGroup = groupBy(props.books, (b) => `${b.id}-${b.level}`);
+    for (const key in bookGroup) {
+        const book = bookGroup[key][0];
         const skillBook = useGameStore().bookMap[book.id][book.level];
         if (!skillBook) continue;
-        result.push(skillBook);
+        result.push({ ...skillBook, count: bookGroup[key].length });
     }
     return result;
 });
+
+const emits = defineEmits<{
+    (e: "use-book", book: MonsterSkillBook): void;
+}>();
 </script>
 
 <style lang="less" scoped>
@@ -51,6 +64,10 @@ const renderBookItem = computed(() => {
         .u-icon {
             background: transparent;
         }
+    }
+
+    .u-count {
+        margin-right: 10px;
     }
 }
 </style>
