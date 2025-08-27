@@ -73,5 +73,6 @@ interface StatTableDataRow {
     teach: [number, string[]][];
     [key: `skill-${number}`]: number;
     [key: `skill-book-${number}`]: number[];
+    roleSearchKey?: string;
     default: "-";
 }

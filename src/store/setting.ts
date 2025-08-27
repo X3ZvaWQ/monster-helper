@@ -11,6 +11,9 @@ export const useSettingStore = defineStore("setting", {
             meta: "server" as "server" | "cd",
         },
         stat: {
+            enableSelect: false as boolean,
+            selectRoles: [] as string[],
+            hiddenSelected: false as boolean, // 隐藏选择项
             columns: cloneDeep(defaultStatColumns),
             style: {
                 color: null as string | null,

@@ -1,21 +1,15 @@
 <template>
     <div class="p-stat" ref="pageEl">
         <div class="m-toolbar">
-            <n-input v-model:value="search" placeholder="搜索" clearable>
-                <template #suffix>
-                    <n-tooltip>
-                        <template #trigger>
-                            <i-material-symbols:info-rounded />
-                        </template>
-                        <n-el tag="p">有人说想要搜索能传功指定boss的角色</n-el>
-                        <n-el tag="p">我寻思确实有必要，于是有了这个想做成 omni search 的输入框</n-el>
-                        <n-el tag="p">但是一时间除了传功不知道搜点啥，有什么想法可以提反馈</n-el>
-                        <n-el tag="p">这里输入boss的名称或者拼音首字母即可过滤可传该boss技能的角色</n-el>
-                        <n-el tag="p">（默认7重，可以通过在列展示可传功调整最小显示等级来修改）</n-el>
-                    </n-tooltip>
-                </template>
-            </n-input>
-            <n-flex :wrap="false">
+            <n-flex :wrap="false" :align="'center'">
+                <n-flex :wrap="false" :align="'center'" class="shrink-0">
+                    <n-switch v-model:value="useSettingStore().stat.enableSelect" :round="false"></n-switch>
+                    <n-text>选择模式</n-text>
+                </n-flex>
+                <n-flex :wrap="false" :align="'center'" class="shrink-0" v-if="useSettingStore().stat.enableSelect">
+                    <n-switch v-model:value="useSettingStore().stat.hiddenSelected" :round="false"></n-switch>
+                    <n-text>隐藏未选择</n-text>
+                </n-flex>
                 <n-button @click="openSetting" type="primary">表格配置</n-button>
                 <n-popconfirm @positive-click="useRoleStore().resetCd()">
                     <template #trigger>
@@ -33,6 +27,8 @@
                 :bordered="true"
                 :scroll-x="tableWidth"
                 :on-unstable-column-resize="onColumnResize"
+                :row-key="(row) => row.id"
+                v-model:checked-row-keys="useSettingStore().stat.selectRoles"
             />
         </div>
     </div>
@@ -55,9 +51,13 @@ import { DataTableColumns } from "naive-ui";
 import { TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
 import { CSSProperties } from "vue";
 import { useResizeObserver } from "@vueuse/core";
-import { matchSearch } from "@/utils/search";
+import { getSearchKey, matchSearch } from "@/utils/search";
 
-const search = ref("");
+const filterPattern = ref<Record<string, string>>({
+    account: "",
+    role: "",
+    teach: "",
+});
 
 const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) => {
     const settingColumn = useSettingStore().stat.columns.find(
@@ -110,7 +110,15 @@ const columns = computed(() => {
         }
         return style;
     };
-
+    if (useSettingStore().stat.enableSelect) {
+        result.push({
+            type: "selection",
+            width: 40,
+            fixed: "left",
+            align: "center",
+            className: "shrink-0",
+        } as TableColumn<StatTableDataRow>);
+    }
     for (const item of setting) {
         // 构造key
         const key = getColumnKey(item);
@@ -316,6 +324,42 @@ const columns = computed(() => {
                     { default: () => divContent }
                 );
             },
+            filter: item.type === "basic" && ["account", "role", "teach"].includes(item.key),
+            renderFilter() {
+                const key = item.type === "basic" ? item.key : "";
+                return h(
+                    resolveComponent("n-button"),
+                    {
+                        text: true,
+                        size: "small",
+                        class: { "n-data-table-filter": true, "is-active": filterPattern.value[key] },
+                    },
+                    {
+                        default: () => h(resolveComponent("i-mdi:filter")),
+                    }
+                );
+            },
+            renderFilterMenu() {
+                const key = item.type === "basic" ? item.key : "";
+                return h(
+                    resolveComponent("n-flex"),
+                    {
+                        align: "center",
+                        wrap: false,
+                    },
+                    {
+                        default: () =>
+                            h(resolveComponent("n-input"), {
+                                clearable: true,
+                                placeholder: `筛选 ${getColumnLabel(item)}`,
+                                value: filterPattern.value[key],
+                                onUpdateValue: (value: string) => {
+                                    filterPattern.value[key] = value;
+                                },
+                            }),
+                    }
+                );
+            },
         } as TableColumn<StatTableDataRow>;
 
         column.width = item.width || 100;
@@ -335,6 +379,7 @@ const data = computed(() => {
             account: role.account,
             server: role.server,
             role: role.name,
+            roleSearchKey: getSearchKey(role.name),
             school: getSchoolName(role.schoolId!),
             schoolId: Number(role.schoolId),
             gender: role.gender,
@@ -380,17 +425,41 @@ const data = computed(() => {
     return result;
 });
 const filterData = computed(() => {
-    if (!search.value) return data.value;
-    const searchBosses = bossList.filter((boss) => matchSearch(search.value, boss.searchKey));
+    const searchBosses = bossList.filter((boss) => {
+        // 1. boss名称匹配
+        if (matchSearch(filterPattern.value.teach, boss.searchKey)) return true;
+        // 2. boss的技能名称匹配
+        const bossSkills = useGameStore().skills.filter((skill) => {
+            return skill.belongBoss?.includes(boss.skillAlias);
+        });
+        if (bossSkills.some((skill) => matchSearch(filterPattern.value.teach, skill.searchKey!))) return true;
+    });
     const column = useSettingStore().stat.columns.find((item) => item.type === "basic" && item.key === "teach");
     const teachMinLevel = column?.minLevel || 7;
-    return data.value.filter((row) => {
-        if (!searchBosses.length) return true;
-        // 如果有匹配到的boss，仅展示这些boss之中可传功等级为「表格配置内的传功最小显示等级」的角色
-        const hasTeach = row.teach.some(([level, bosses]: [number, string[]]) => {
-            return searchBosses.some((boss) => bosses.includes(boss.name)) && level >= teachMinLevel;
-        });
-        if (!hasTeach) return false;
+    return data.value.filter((row: StatTableDataRow) => {
+        // 隐藏未选择角色~
+        if (useSettingStore().stat.enableSelect && useSettingStore().stat.hiddenSelected) {
+            if (!useSettingStore().stat.selectRoles.includes(row.id)) {
+                return false;
+            }
+        }
+        // 账号筛选
+        if (filterPattern.value.account && !row.account.includes(filterPattern.value.account)) {
+            return false;
+        }
+        if (filterPattern.value.role && !matchSearch(filterPattern.value.role, row.roleSearchKey!)) {
+            return false;
+        }
+        // 如果有匹配到的boss，仅展示这些boss之中可传功等级为「表格配置内的传功最小显示等级」的角色;
+        if (
+            filterPattern.value.teach &&
+            !row.teach.some(([level, bosses]: [number, string[]]) => {
+                return searchBosses.some((boss) => bosses.includes(boss.name)) && level >= teachMinLevel;
+            })
+        ) {
+            return false;
+        }
+
         return true;
     });
 });
@@ -462,6 +531,15 @@ useResizeObserver(tableWrapperRef, (entries) => {
             .loop-level-bg();
         }
 
+        .n-data-table .n-data-table-th .n-data-table-filter {
+            right: 10px;
+
+            &.is-active {
+                background-color: var(--n-color-focus);
+                color: var(--n-text-color-focus);
+            }
+        }
+
         @keyframes bookTip {
             0% {
                 transform: scale(1);
@@ -484,6 +562,11 @@ useResizeObserver(tableWrapperRef, (entries) => {
         position: sticky;
         top: 0;
         gap: 12px;
+
+        .n-input {
+            flex-grow: 1;
+            width: 0px;
+        }
     }
 
     .n-data-table {
