@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { useGameStore } from "@/store/game";
 import { iconLink } from "@/utils/game";
-import { getSearchKey, matchSearch } from "@/utils/search";
+import { matchSearch } from "@/utils/search";
 import { SelectRenderLabel, SelectRenderTag } from "naive-ui";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 
@@ -31,7 +31,7 @@ const props = withDefaults(
                     label: skill.name,
                     value: skill.id,
                     icon: skill.icon,
-                    search: getSearchKey(skill.name),
+                    search: skill.searchKey,
                 };
             }),
         multiple: true,

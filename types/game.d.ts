@@ -5,4 +5,5 @@ interface MonsterSkill {
     gender: Gender | null; // 技能性别，null表示通用技能
     belongBoss?: string[];
     books?: MonsterSkillBook[];
+    searchKey?: string;
 }

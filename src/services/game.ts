@@ -1,7 +1,7 @@
 import { bossList } from "@/assets/data/game";
 import { url } from "@/assets/data/jx3box";
-// 判断是否在tauri下
 import { fetch } from "./fetch";
+import { getSearchKey } from "@/utils/search";
 
 interface MonsterSkillRaw {
     ParsedSkill: {
@@ -51,6 +51,7 @@ export const getMonsterSkills = async () => {
                         icon: raw.Skill.IconID,
                         name: raw.szSkillName,
                         gender: sexMap[raw.nSex || 0] || null, // 技能性别
+                        searchKey: getSearchKey(raw.szSkillName),
                     };
                     for (const bossName of raw.szBossName.split(";")) {
                         if (!bossName) continue;
