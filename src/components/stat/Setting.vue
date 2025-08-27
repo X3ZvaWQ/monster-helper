@@ -256,6 +256,17 @@
                             </div>
                         </template>
                     </n-dynamic-input>
+                    <n-h6 prefix="bar">表格样式</n-h6>
+                    <n-flex justify="space-between" :align="'center'">
+                        <div class="u-item-label">技能列宽度</div>
+                        <div class="u-item-value grow">
+                            <n-input-number
+                                v-model:value="useSettingStore().stat.skillColumnWidth"
+                                clearable
+                                :step="2"
+                            />
+                        </div>
+                    </n-flex>
                 </n-tab-pane>
             </n-tabs>
         </n-drawer-content>
@@ -342,6 +353,18 @@ watch(skillLevelSelects, () => {
         }
     }
 });
+watch(
+    () => useSettingStore().stat.skillColumnWidth,
+    () => {
+        if(!useSettingStore().stat.skillColumnWidth) return;
+        useSettingStore().stat.columns = useSettingStore().stat.columns.map((column) => {
+            if (column.type === "skill") {
+                column.width = useSettingStore().stat.skillColumnWidth;
+            }
+            return column;
+        });
+    }
+);
 const removeColumn = (column: StatSetting) => {
     if (column.type === "basic") {
         // 基础列，取消选中，从列表中移除
