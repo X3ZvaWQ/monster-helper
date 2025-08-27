@@ -1,6 +1,11 @@
 import { getJx3boxPost } from "@/services/jx3box";
 import { compare } from "semver";
 
+export const getCurrentVersion = async () => {
+    const pkg = await import("../../package.json");
+    return pkg.version;
+};
+
 export const checkUpdate = async () => {
     const post = await getJx3boxPost(101669);
     if (!post || !post.post_content) throw new Error("更新检查失败：获取魔盒文章内容失败");
@@ -17,7 +22,7 @@ export const checkUpdate = async () => {
             return { version, content };
         })
         .filter((log) => log.version && log.content);
-    const currentVersion = await import("../../package.json").then((pkg) => pkg.version);
+    const currentVersion = await getCurrentVersion();
     const isNewest = logs.every((log) => compare(currentVersion, log.version) >= 0);
     if (isNewest) return { isNewest };
     const newerLogs = logs.filter((log) => compare(currentVersion, log.version) < 0);
@@ -27,4 +32,3 @@ export const checkUpdate = async () => {
         changeLogs: newerLogs,
     };
 };
-

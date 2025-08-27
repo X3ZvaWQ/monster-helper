@@ -2,10 +2,12 @@ import { getMonsterBooks, getMonsterSkills, MonsterSkillBook } from "@/services/
 import { distance } from "fastest-levenshtein";
 import { groupBy, keyBy } from "lodash";
 import { SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
+import { getCurrentVersion } from "@/utils/update";
 
 export const useGameStore = defineStore("game", {
     state: () => ({
         lastUpdatedAt: 0, // 上次更新游戏数据的时间戳
+        lastUpdateVersion: "1.2.1", // 上次更新游戏数据的软件版本号
 
         books: [] as MonsterSkillBook[],
         bookMap: {} as Record<number, Record<number, MonsterSkillBook>>,
@@ -14,8 +16,13 @@ export const useGameStore = defineStore("game", {
     }),
     actions: {
         async fetchSkills() {
-            // 6小时以内加载过切skills长度不为0，就不再加载
-            if (this.lastUpdatedAt && this.lastUpdatedAt + 6 * 60 * 60 * 1000 > Date.now() && this.skills.length) {
+            // 6小时以内加载过且skills长度不为0，并且软件版本号相同
+            if (
+                this.lastUpdatedAt &&
+                this.lastUpdatedAt + 6 * 60 * 60 * 1000 > Date.now() &&
+                this.skills.length &&
+                this.lastUpdateVersion === (await getCurrentVersion())
+            ) {
                 return; // 如果技能已经加载过了，就不再加载
             }
             await getMonsterSkills().then((res) => {
@@ -33,6 +40,7 @@ export const useGameStore = defineStore("game", {
                 }
             });
             this.lastUpdatedAt = Date.now();
+            this.lastUpdateVersion = await getCurrentVersion();
         },
         getSkillById(id: number) {
             return this.skillMap[id] || null;
