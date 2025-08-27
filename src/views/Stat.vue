@@ -57,6 +57,8 @@ const filterPattern = ref<Record<string, string>>({
     account: "",
     role: "",
     teach: "",
+    remark: "",
+    cdRemark: "",
 });
 
 const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) => {
@@ -68,6 +70,7 @@ const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) =>
     settingColumn!.width = newWidth;
 };
 
+const filterInputRefs = ref<Record<string, InstanceType<typeof import("naive-ui").NInput> | null>>({});
 const columns = computed(() => {
     const setting = useSettingStore().stat.columns;
     const result: DataTableColumns<StatTableDataRow> = [];
@@ -324,7 +327,7 @@ const columns = computed(() => {
                     { default: () => divContent }
                 );
             },
-            filter: item.type === "basic" && ["account", "role", "teach"].includes(item.key),
+            filter: item.type === "basic" && ["account", "role", "teach", "remark", "cdRemark"].includes(item.key),
             renderFilter() {
                 const key = item.type === "basic" ? item.key : "";
                 return h(
@@ -350,11 +353,19 @@ const columns = computed(() => {
                     {
                         default: () =>
                             h(resolveComponent("n-input"), {
+                                ref: (el: any) => {
+                                    filterInputRefs.value[key] = el;
+                                },
                                 clearable: true,
                                 placeholder: `筛选 ${getColumnLabel(item)}`,
                                 value: filterPattern.value[key],
                                 onUpdateValue: (value: string) => {
                                     filterPattern.value[key] = value;
+                                },
+                                onVnodeMounted() {
+                                    nextTick(() => {
+                                        filterInputRefs.value[key]?.focus();
+                                    });
                                 },
                             }),
                     }
@@ -457,6 +468,12 @@ const filterData = computed(() => {
                 return searchBosses.some((boss) => bosses.includes(boss.name)) && level >= teachMinLevel;
             })
         ) {
+            return false;
+        }
+        if (filterPattern.value.remark && !row.remark.includes(filterPattern.value.remark)) {
+            return false;
+        }
+        if (filterPattern.value.cdRemark && !row.cdRemark.includes(filterPattern.value.cdRemark)) {
             return false;
         }
 
