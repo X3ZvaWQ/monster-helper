@@ -21,6 +21,7 @@
         </div>
         <div class="m-data" ref="tableWrapperRef" :style="tableStyle">
             <n-data-table
+                ref="tableRef"
                 :max-height="maxHeight"
                 :columns="columns"
                 :data="filterData"
@@ -29,6 +30,7 @@
                 :on-unstable-column-resize="onColumnResize"
                 :row-key="(row) => row.id"
                 v-model:checked-row-keys="useSettingStore().stat.selectRoles"
+                :on-update:sorter="onUpdateSorter"
             />
         </div>
     </div>
@@ -48,7 +50,7 @@ import { useSettingStore } from "@/store/setting";
 import { getSchoolName, iconLink } from "@/utils/game";
 import { sumBy } from "lodash";
 import { DataTableColumns } from "naive-ui";
-import { TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
+import { OnUpdateSorter, TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
 import { CSSProperties } from "vue";
 import { useResizeObserver } from "@vueuse/core";
 import { getSearchKey, matchSearch } from "@/utils/search";
@@ -487,6 +489,25 @@ const tableStyle = computed((): CSSProperties => {
         }
         return style;
     }, {} as CSSProperties);
+});
+
+const tableRef = ref<InstanceType<typeof import("naive-ui").NDataTable> | null>(null);
+const onUpdateSorter: OnUpdateSorter = ({ columnKey, order }) => {
+    if (order === false) {
+        useSettingStore().stat.sort = [];
+    } else {
+        useSettingStore().stat.sort = [columnKey, order];
+    }
+};
+const initSorter = () => {
+    const { sort } = useSettingStore().stat;
+    if (sort?.length) {
+        const [columnKey, order] = sort;
+        tableRef.value?.sort(columnKey, order as "ascend" | "descend");
+    }
+};
+onMounted(() => {
+    initSorter();
 });
 
 const settingPanel = ref<InstanceType<typeof StatSetting> | null>(null);

@@ -30,6 +30,7 @@ export const useSettingStore = defineStore("setting", {
                     color: "#9A11988A",
                 },
             ] as { level: number | null; color: string }[],
+            sort: [],
             skillColumnWidth: 40 as number, // 技能列宽
         },
         statBoss: {
