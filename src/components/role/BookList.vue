@@ -34,7 +34,7 @@ const renderBookItem = computed(() => {
     const bookGroup = groupBy(props.books, (b) => `${b.id}-${b.level}`);
     for (const key in bookGroup) {
         const book = bookGroup[key][0];
-        const skillBook = useGameStore().bookMap[book.id][book.level];
+        const skillBook = useGameStore().bookMap?.[book.id]?.[book.level];
         if (!skillBook) continue;
         result.push({ ...skillBook, count: bookGroup[key].length });
     }

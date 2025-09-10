@@ -141,6 +141,7 @@ const onOk = () => {
         }
     }
     for (const book of bookForm.value) {
+        if(!book.skillId || !book.level) continue;
         role.inventory.push({ id: book.skillId!, level: book.level! });
     }
 };
