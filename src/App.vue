@@ -46,8 +46,8 @@ const themeRef = computed(() => {
 <style lang="less" scoped>
 .c-layout {
     display: flex;
-    height: 100dvh;
-    width: 100dvw;
+    height: 100vh;
+    width: 100vw;
     overflow: hidden;
 }
 .c-container {
