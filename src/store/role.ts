@@ -33,6 +33,7 @@ const roleBookMapCache = new Map<string, ComputedRef<Record<number, Record<numbe
 export const useRoleStore = defineStore("role", {
     state: () => ({
         roles: [] as Role[],
+        accountOrder: [] as string[],
     }),
     actions: {
         resetCd() {

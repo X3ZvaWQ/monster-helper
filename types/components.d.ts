@@ -37,6 +37,8 @@ declare module 'vue' {
     'IMaterialSymbols:refreshRounded': typeof import('~icons/material-symbols/refresh-rounded')['default']
     'IMaterialSymbols:settingsOutlineRounded': typeof import('~icons/material-symbols/settings-outline-rounded')['default']
     'IMaterialSymbols:settingsRounded': typeof import('~icons/material-symbols/settings-rounded')['default']
+    'IMaterialSymbols:sort': typeof import('~icons/material-symbols/sort')['default']
+    'IMaterialSymbols:sortRounded': typeof import('~icons/material-symbols/sort-rounded')['default']
     'IMaterialSymbols:tableOutline': typeof import('~icons/material-symbols/table-outline')['default']
     'IMdi:arrowBackCircle': typeof import('~icons/mdi/arrow-back-circle')['default']
     'IMdi:chartArc': typeof import('~icons/mdi/chart-arc')['default']

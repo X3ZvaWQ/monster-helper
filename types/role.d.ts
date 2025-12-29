@@ -17,6 +17,8 @@ interface Role {
     // 传功计数
     teachCount?: number;
     taughtCount?: number;
+    // 排序
+    order?: number;
 }
 
 interface RoleSkill {

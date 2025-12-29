@@ -2,6 +2,10 @@
     <div class="p-role">
         <n-flex class="m-toolbar" :wrap="false">
             <n-input class="grow" v-model:value="search" placeholder="搜索角色" clearable />
+            <n-button text type="primary" @click="isSorting = !isSorting" :class="{ 'is-sorting': isSorting }">
+                <i-material-symbols:sort-rounded v-if="!isSorting" />
+                <i-material-symbols:check-rounded v-else />
+            </n-button>
             <n-popover trigger="click">
                 <template #trigger>
                     <n-button text type="primary">
@@ -38,17 +42,40 @@
             </n-popconfirm>
         </n-flex>
 
-        <div class="m-account-list" v-if="roleList.length">
-            <n-card class="m-account-item" v-for="(account, index) in roleList" :key="index" size="small">
+        <vue-draggable
+            class="m-account-list"
+            :animation="200"
+            v-model="roleList"
+            v-if="roleList.length"
+            :disabled="!isSorting"
+        >
+            <n-card
+                :class="{ 'is-sorting': isSorting }"
+                class="m-account-item"
+                v-for="(account, index) in roleList"
+                :key="index"
+                size="small"
+            >
                 <template #header>
                     <div class="m-account-title">{{ account.account }}</div>
                 </template>
-                <div class="m-role-list">
+                <vue-draggable
+                    class="m-role-list"
+                    v-model="account.roles"
+                    group="role"
+                    @add="onRoleMove"
+                    @update="onRoleSort"
+                    :animation="200"
+                    :data-account="account.account"
+                    :disabled="!isSorting"
+                >
                     <div
                         class="m-role-item"
                         v-for="(role, i) in account.roles"
                         :key="i"
                         @click="onOpenDetail(role.id!)"
+                        :data-role-id="role.id"
+                        :class="{ 'is-sorting': isSorting }"
                     >
                         <img class="u-school-icon" :src="schoolIconLink(role.schoolId!)" alt="" />
                         <span class="u-role-name">{{ role.name }}</span>
@@ -60,9 +87,9 @@
                             <span v-if="role.cdRemark">({{ role.cdRemark }})</span>
                         </span>
                     </div>
-                </div>
+                </vue-draggable>
             </n-card>
-        </div>
+        </vue-draggable>
         <n-empty class="m-empty" v-else description="没找到符合条件的角色，请点击右上角新建角色~" />
     </div>
     <role-create-dialog ref="createDialog" />
@@ -71,13 +98,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { chain } from "lodash";
+import { chain, orderBy } from "lodash";
 import RoleCreateDialog from "../components/role/RoleCreateDialog.vue";
 import RoleDetailDialog from "../components/role/RoleDetailDialog.vue";
 import { useRoleStore } from "../store/role";
 import { getSearchKey, matchSearch } from "../utils/search";
 import { getSchoolName, schoolIconLink } from "../utils/game";
 import { useSettingStore } from "@/store/setting";
+import { VueDraggable } from "vue-draggable-plus";
 
 const createDialog = ref<InstanceType<typeof RoleCreateDialog> | null>(null);
 const onCreateRole = () => {
@@ -91,23 +119,51 @@ const onOpenDetail = (id: string) => {
     detailDialog.value.open(id);
 };
 
+const isSorting = ref(false);
+const onRoleMove = (e: any) => {
+    const targetAccount = e.to?.dataset?.account;
+    if (!targetAccount) return;
+    const roleId = e.data?.id;
+    const role = useRoleStore().getRoleById(roleId);
+    if (!role) return;
+    role.account = targetAccount;
+};
+const onRoleSort = (e: any) => {
+    const targetDom = e.target as HTMLElement;
+    const children = targetDom.children;
+    const { oldIndex, newIndex } = e;
+    const roleIds = Array.from(children).map((item) => item.getAttribute("data-role-id") as string);
+    const moveRoleId = roleIds.splice(oldIndex, 1)[0];
+    roleIds.splice(newIndex, 0, moveRoleId);
+    roleIds.forEach((roleId, index) => {
+        const role = useRoleStore().getRoleById(roleId);
+        if (!role) return;
+        role.order = index;
+    });
+};
 const search = ref<string>("");
-const roleList = computed(() => {
-    return chain(useRoleStore().roles)
-        .map((role) => ({
-            ...role,
-            searchKey: getSearchKey(role.name, role.account, role.server, getSchoolName(role.schoolId!)),
-        }))
-        .filter((role) => {
-            if (!search.value) return true;
-            return matchSearch(search.value, role.searchKey);
-        })
-        .groupBy((role) => role.account)
-        .map((roles, account) => ({
-            account,
-            roles,
-        }))
-        .value();
+const roleList = computed({
+    get: () => {
+        return chain(useRoleStore().roles)
+            .map((role) => ({
+                ...role,
+                searchKey: getSearchKey(role.name, role.account, role.server, getSchoolName(role.schoolId!)),
+            }))
+            .filter((role) => {
+                if (!search.value) return true;
+                return matchSearch(search.value, role.searchKey);
+            })
+            .groupBy((role) => role.account)
+            .map((roles, account) => ({
+                account,
+                roles: orderBy(roles, "order"),
+            }))
+            .orderBy((item) => (useRoleStore().accountOrder || []).indexOf(item.account))
+            .value();
+    },
+    set: (v) => {
+        useRoleStore().accountOrder = v.map((item) => item.account);
+    },
 });
 </script>
 
@@ -123,6 +179,12 @@ const roleList = computed(() => {
         align-items: center;
         position: sticky;
         top: 0;
+    }
+
+    .n-button.is-sorting {
+        transition: all 0.15s ease;
+        transform: scale(1.5);
+        font-weight: bold;
     }
 
     .m-empty {
@@ -143,9 +205,15 @@ const roleList = computed(() => {
 
     .m-account-item {
         width: 300px;
+
+        &.is-sorting {
+            cursor: move;
+            border-style: dashed;
+        }
     }
 
     .m-role-list {
+        height: 100%;
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -175,6 +243,10 @@ const roleList = computed(() => {
         .u-role-server {
             color: #999;
             font-size: 0.8rem;
+        }
+
+        &.is-sorting {
+            cursor: pointer;
         }
     }
 }
