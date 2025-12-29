@@ -15,6 +15,7 @@ declare module 'vue' {
     FileSelect: typeof import('./../src/components/common/FileSelect.vue')['default']
     'IAntDesign:inboxOutlined': typeof import('~icons/ant-design/inbox-outlined')['default']
     'IBx:game': typeof import('~icons/bx/game')['default']
+    'IGameIcons:fishMonster': typeof import('~icons/game-icons/fish-monster')['default']
     'IGrommetIcons:system': typeof import('~icons/grommet-icons/system')['default']
     'IIc:baselineBeachAccess': typeof import('~icons/ic/baseline-beach-access')['default']
     'IIc:roundClear': typeof import('~icons/ic/round-clear')['default']

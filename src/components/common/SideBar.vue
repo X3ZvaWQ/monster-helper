@@ -45,6 +45,11 @@ const items = reactive([
         icon: () => h(resolveComponent("i-material-symbols:table-outline")),
     },
     {
+        label: () => h(RouterLink, { to: "/stat/boss" }, () => "首领"),
+        key: "stat-boss",
+        icon: () => h(resolveComponent("i-game-icons:fish-monster")),
+    },
+    {
         label: () => h(RouterLink, { to: "/role" }, () => "角色"),
         key: "role",
         icon: () => h(resolveComponent("i-bx:game")),

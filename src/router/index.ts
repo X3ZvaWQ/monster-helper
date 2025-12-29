@@ -1,3 +1,4 @@
+import { useRoleStore } from "@/store/role";
 import { createWebHistory, createRouter as _createRouter, RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
@@ -14,10 +15,20 @@ const routes: RouteRecordRaw[] = [
     },
     {
         name: "stat-boss",
-        path: "/stat/boss/:roleId",
+        path: "/stat/boss/:roleId?",
         component: () => import("@/views/StatBoss.vue"),
-        meta: {
-            menu: "stat",
+        beforeEnter(to, _, next) {
+            const roleId = to.params.roleId;
+            if (roleId) {
+                next();
+            } else {
+                next({
+                    name: "stat-boss",
+                    params: {
+                        roleId: useRoleStore().roles[0]?.id,
+                    },
+                });
+            }
         },
     },
     {
