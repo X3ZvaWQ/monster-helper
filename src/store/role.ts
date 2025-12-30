@@ -1,5 +1,5 @@
 import {
-    bossSpiritEnduranceCoef,
+    bossList,
     levelSpiritEnduranceCoef,
     noSpiritEnduranceSkills,
     noThreeLevelSpiritEnduranceSkills,
@@ -124,7 +124,8 @@ export const useRoleStore = defineStore("role", {
             result.threeSkillSpiritEndurance = result.spirit;
             // 2. boss 全收集精耐
             const skillIdMap = this.getSkillLevelMap(role).value;
-            for (const { boss, coef } of bossSpiritEnduranceCoef) {
+            for (const { name, coef } of bossList) {
+                if (!coef) continue; // 没有精耐系数，跳过
                 let bossSpirit = 0;
                 let bossEndurance = 0;
                 let highestTeachLevel = 0; // 可传功等级
@@ -132,7 +133,7 @@ export const useRoleStore = defineStore("role", {
                 // 取出属于该boss的计算精耐的技能
                 const bossSkills = useGameStore().skills.filter(
                     (s) =>
-                        s.belongBoss?.includes(boss) &&
+                        s.belongBoss?.includes(name) &&
                         !noSpiritEnduranceSkills.has(s.id) &&
                         !noThreeLevelSpiritEnduranceSkills.has(s.id) &&
                         (s.gender === null || s.gender == role.gender)
@@ -155,7 +156,7 @@ export const useRoleStore = defineStore("role", {
                         break;
                     }
                 }
-                result.bossSpiritEndurance[boss] = {
+                result.bossSpiritEndurance[name] = {
                     spirit: bossSpirit,
                     endurance: bossEndurance,
                     collectCount: enoughLevelSkill.length, // 初始收集数为0
@@ -165,7 +166,7 @@ export const useRoleStore = defineStore("role", {
                 result.spirit += bossSpirit;
                 result.endurance += bossEndurance;
 
-                result.teach[highestTeachLevel].push(boss);
+                result.teach[highestTeachLevel].push(name);
             }
             // 3. 传功技能计算
             // 计算当前精耐可以传功的最大数值

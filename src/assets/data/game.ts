@@ -33,168 +33,224 @@ export const skillLevelLabel = [
 export type SkillLevelLabel = (typeof skillLevelLabel)[number];
 
 /**
- * boss列表
- * name: boss名称
+ * boss列表声明
  * alias: boss别名
  * skillAlias: 技能表里boss的名称
+ * coef: boss技能全收集的boss精耐分配系数数组，如果是二维数组，则第一项为女号，第二项为男号
+ * 数据来源：
+ * https://www.jx3box.com/fb/95409#directory-17
+ * https://www.jx3box.com/fb/105250
  */
 const _bossList = [
     {
         name: "卫栖梧",
         alias: ["老卫"],
         skillAlias: "卫栖梧",
+        coef: [0.3, 0.7],
     },
     {
         name: "牡丹",
         alias: [],
         skillAlias: "牡丹",
+        coef: [0.8, 0.2],
     },
     {
         name: "谢云流",
         alias: ["老谢"],
         skillAlias: "谢云流",
+        coef: [0.5, 0.5],
     },
     {
         name: "提多罗吒",
         alias: [],
         skillAlias: "提多罗吒",
+        coef: [0.2, 0.8],
     },
     {
         name: "武逸青",
         alias: ["三王", "萧沙"],
         skillAlias: "武逸青、胡鞑、萧沙",
+        coef: [0.2, 0.8],
     },
     {
         name: "阿基修斯",
         alias: [],
         skillAlias: "阿基修斯",
+        coef: [0.5, 0.5],
     },
     {
         name: "悉达罗摩",
         alias: [],
         skillAlias: "悉达罗摩",
+        coef: [0.7, 0.3],
     },
     {
         name: "萧武宗",
         alias: [],
         skillAlias: "萧武宗",
+        coef: [0.4, 0.6],
     },
     {
         name: "武雪散",
         alias: [],
         skillAlias: "武雪散",
+        coef: [0.4, 0.6],
     },
     {
         name: "迟驻",
         alias: ["柱子哥"],
         skillAlias: "迟驻",
+        coef: [0.6, 0.4],
     },
     {
         name: "韦柔丝",
         alias: [],
         skillAlias: "韦柔丝",
+        coef: [0.4, 0.6],
     },
     {
         name: "程沐华",
         alias: [],
         skillAlias: "程沐华",
+        coef: [0.8, 0.2],
     },
     {
         name: "鬼影小次郎",
         alias: [],
         skillAlias: "鬼影小次郎",
+        coef: [0.7, 0.3],
     },
     {
         name: "冯度",
         alias: [],
         skillAlias: "冯度",
+        coef: [0.7, 0.3],
     },
     {
         name: "华鹤炎",
-        alias: [],
+        alias: ["华子"],
         skillAlias: "华鹤炎",
+        coef: [0.3, 0.7],
     },
     {
         name: "罗翼",
         alias: [],
         skillAlias: "罗翼",
+        coef: [0.2, 0.8],
     },
     {
         name: "钱宗龙",
         alias: [],
         skillAlias: "钱宗龙、杜姬欣",
+        coef: [
+            [0.7, 0.3],
+            [0.3, 0.7],
+        ],
     },
     {
         name: "方宇谦",
         alias: [],
         skillAlias: "方宇谦",
+        coef: [0.7, 0.3],
     },
     {
         name: "陆寻",
         alias: [],
         skillAlias: "陆寻",
+        coef: [0.1, 0.9],
     },
     {
         name: "秦雷",
         alias: [],
         skillAlias: "秦雷",
+        coef: [0.3, 0.7],
     },
     {
         name: "上衫勇刀",
         alias: [],
         skillAlias: "上衫勇刀",
+        coef: [0.2, 0.8],
     },
     {
         name: "肖童",
         alias: [],
         skillAlias: "肖童",
+        coef: [0.8, 0.2],
     },
     {
         name: "源明雅",
         alias: [],
         skillAlias: "源明雅",
+        coef: [1, 0],
     },
     {
         name: "钱南撰",
         alias: [],
         skillAlias: "钱南撰",
+        coef: [0.4, 0.6],
     },
     {
         name: "恶战灵霄峡",
         alias: [],
         skillAlias: "恶战",
+        coef: null,
     },
     {
         name: "恶战日轮山城",
         alias: [],
         skillAlias: "恶战",
+        coef: null,
     },
     {
         name: "司徒一一",
         alias: [],
         skillAlias: "司徒一一",
+        coef: [0.7, 0.3],
     },
     {
         name: "阿依努尔",
         alias: [],
         skillAlias: "阿依努尔",
+        coef: [0.4, 0.6],
     },
     {
         name: "拓跋思南",
         alias: [],
         skillAlias: "拓跋思南",
+        coef: [0.2, 0.8],
     },
     {
         name: "谢云流（青年）",
         alias: [],
         skillAlias: "青年谢云流",
+        coef: [0.5, 0.5],
     },
     {
         name: "公孙二娘",
         alias: [],
         skillAlias: "公孙二娘",
+        coef: [0.8, 0.2],
+    },
+    {
+        name: "程沐华（青年）",
+        alias: [],
+        skillAlias: "程沐华·青年",
+        coef: [0.8, 0.2],
+    },
+    {
+        name: "韦柔丝（困境）",
+        alias: [],
+        skillAlias: "韦柔丝·困境",
+        coef: [0.2, 0.8],
+    },
+    {
+        name: "肖红",
+        alias: [],
+        skillAlias: "肖红",
+        coef: [0.8, 0.2],
     },
 ] as const;
+
 export const bossList = _bossList.map((boss) => ({
     ...boss,
     searchKey: getSearchKey(boss.name, ...boss.alias),
@@ -207,133 +263,6 @@ export type BossName = (typeof bossList)[number]["name"];
  * 用于计算角色精耐
  */
 export const levelSpiritEnduranceCoef = [0, 800, 800, 800, 800, 800, 1600, 2400, 4000, 6000, 9000] as const;
-
-/**
- * boss技能全收集的boss精耐分配系数
- * key: boss名称， value: 精耐系数数组，如果是二维数组，则第一项为女号，第二项为男号
- * 数据来源：https://www.jx3box.com/fb/95409#directory-17
- */
-export const bossSpiritEnduranceCoef = [
-    {
-        boss: "华鹤炎",
-        coef: [0.3, 0.7],
-    },
-    {
-        boss: "罗翼",
-        coef: [0.2, 0.8],
-    },
-    {
-        boss: "钱宗龙",
-        coef: [
-            [0.7, 0.3],
-            [0.3, 0.7],
-        ],
-    },
-    {
-        boss: "鬼影小次郎",
-        coef: [0.7, 0.3],
-    },
-    {
-        boss: "上衫勇刀",
-        coef: [0.2, 0.8],
-    },
-    {
-        boss: "源明雅",
-        coef: [1, 0],
-    },
-    {
-        boss: "方宇谦",
-        coef: [0.7, 0.3],
-    },
-    {
-        boss: "肖童",
-        coef: [0.8, 0.2],
-    },
-    {
-        boss: "秦雷",
-        coef: [0.3, 0.7],
-    },
-    {
-        boss: "卫栖梧",
-        coef: [0.3, 0.7],
-    },
-    {
-        boss: "牡丹",
-        coef: [0.8, 0.2],
-    },
-    {
-        boss: "陆寻",
-        coef: [0.1, 0.9],
-    },
-    {
-        boss: "谢云流",
-        coef: [0.5, 0.5],
-    },
-    {
-        boss: "武逸青",
-        coef: [0.2, 0.8],
-    },
-    {
-        boss: "韦柔丝",
-        coef: [0.4, 0.6],
-    },
-    {
-        boss: "程沐华",
-        coef: [0.8, 0.2],
-    },
-    {
-        boss: "提多罗吒",
-        coef: [0.2, 0.8],
-    },
-    {
-        boss: "阿基修斯",
-        coef: [0.5, 0.5],
-    },
-    {
-        boss: "钱南撰",
-        coef: [0.4, 0.6],
-    },
-    {
-        boss: "悉达罗摩",
-        coef: [0.7, 0.3],
-    },
-    {
-        boss: "萧武宗",
-        coef: [0.4, 0.6],
-    },
-    {
-        boss: "阿依努尔",
-        coef: [0.4, 0.6],
-    },
-    {
-        boss: "司徒一一",
-        coef: [0.7, 0.3],
-    },
-    {
-        boss: "迟驻",
-        coef: [0.6, 0.4],
-    },
-    {
-        boss: "武雪散",
-        coef: [0.4, 0.6],
-    },
-    {
-        boss: "拓跋思南",
-        coef: [0.2, 0.8],
-    },
-    {
-        boss: "谢云流（青年）",
-        coef: [0.5, 0.5],
-    },
-    {
-        boss: "公孙二娘",
-        coef: [0.8, 0.2],
-    },
-    {
-        boss: "冯度",
-        coef: [0.7, 0.3],
-    },
-] as const;
 
 /**
  * 收集三本某等级的技能增加的精耐数值
