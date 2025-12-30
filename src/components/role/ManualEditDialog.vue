@@ -39,7 +39,7 @@
                             <n-select
                                 class="u-level-select"
                                 v-model:value="value.level"
-                                :options="getSkillLevelOptions(value.skillId)"
+                                :options="getSkillLevelOptions()"
                                 clearable
                                 :disabled="!value.skillId"
                             ></n-select>
@@ -74,7 +74,7 @@
                             <n-select
                                 class="u-level-select"
                                 v-model:value="value.level"
-                                :options="getSkillLevelOptions(value.skillId)"
+                                :options="getSkillLevelOptions()"
                                 clearable
                             ></n-select>
                         </n-flex>
@@ -97,16 +97,19 @@ const role = computed(() => {
     return useRoleStore().getRoleById(roleId.value);
 });
 const onChangeSkill = (value: any) => {
-    nextTick(() => (value.level = getSkillLevelOptions(value.skillId)[0].value));
+    nextTick(() => {
+        const levelMap = useRoleStore().getSkillLevelMap(role.value!);
+        const currentLevel = levelMap.value[value.skillId!];
+        if (currentLevel !== undefined) {
+            value.level = currentLevel + 1;
+        }
+    });
 };
-const getSkillLevelOptions = (skillId: number) => {
-    const levelMap = useRoleStore().getSkillLevelMap(role.value!);
-    return Array.from(skillLevelLabel.entries())
-        .filter(([level]) => level > levelMap.value[skillId])
-        .map(([level, label]) => ({
-            value: level,
-            label,
-        }));
+const getSkillLevelOptions = () => {
+    return Array.from(skillLevelLabel.entries()).map(([level, label]) => ({
+        value: level,
+        label,
+    }));
 };
 
 const skillForm = ref([
@@ -141,7 +144,7 @@ const onOk = () => {
         }
     }
     for (const book of bookForm.value) {
-        if(!book.skillId || !book.level) continue;
+        if (!book.skillId || !book.level) continue;
         role.inventory.push({ id: book.skillId!, level: book.level! });
     }
 };
