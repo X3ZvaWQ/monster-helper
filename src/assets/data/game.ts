@@ -1,3 +1,4 @@
+import { useGameStore } from "@/store/game";
 import { getSearchKey } from "@/utils/search";
 
 export const bookIconId = [245, 92, 241, 244, 388] as const;
@@ -251,12 +252,17 @@ const _bossList = [
     },
 ] as const;
 
-export const bossList = _bossList.map((boss) => ({
-    ...boss,
-    searchKey: getSearchKey(boss.name, ...boss.alias),
-}));
+export const bossList = computed(() => {
+    // 线上数据放在文章里，如果能获取到这些数据就用这些，免得赛季更新还要发版
+    let source = useGameStore().bossList as any as typeof _bossList;
+    if (!source.length) source = [..._bossList];
+    return source.map((boss) => ({
+        ...boss,
+        searchKey: getSearchKey(boss.name, ...boss.alias),
+    }));
+});
 
-export type BossName = (typeof bossList)[number]["name"];
+export type BossName = (typeof bossList.value)[number]["name"];
 
 /**
  * boss技能全收集的等级精耐系数

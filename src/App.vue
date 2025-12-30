@@ -25,6 +25,7 @@ import { lightTheme, darkTheme, useOsTheme, zhCN } from "naive-ui";
 onMounted(() => {
     const gameStore = useGameStore();
     gameStore.fetchSkills();
+    gameStore.fetchBossList();
 });
 
 const osThemeRef = useOsTheme();

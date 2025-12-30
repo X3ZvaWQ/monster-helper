@@ -438,7 +438,7 @@ const data = computed(() => {
     return result;
 });
 const filterData = computed(() => {
-    const searchBosses = bossList.filter((boss) => {
+    const searchBosses = bossList.value.filter((boss) => {
         // 1. boss名称匹配
         if (matchSearch(filterPattern.value.teach, boss.searchKey)) return true;
         // 2. boss的技能名称匹配

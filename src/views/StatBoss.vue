@@ -151,7 +151,7 @@ const listData = computed(() => {
         .keyBy("boss")
         .mapValues("level")
         .value();
-    for (const { name: boss } of [...bossList.filter((b) => !b.name.includes("恶战")), { name: "恶战" }]) {
+    for (const { name: boss } of [...bossList.value.filter((b) => !b.name.includes("恶战")), { name: "恶战" }]) {
         const {
             spirit = 0,
             endurance = 0,

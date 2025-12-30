@@ -3,18 +3,44 @@ import { distance } from "fastest-levenshtein";
 import { groupBy, keyBy } from "lodash";
 import { SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
 import { getCurrentVersion } from "@/utils/update";
+import { getJx3boxPost } from "@/services/jx3box";
 
 export const useGameStore = defineStore("game", {
     state: () => ({
         lastUpdatedAt: 0, // 上次更新游戏数据的时间戳
         lastUpdateVersion: "1.2.1", // 上次更新游戏数据的软件版本号
 
+        lastFetchBossListAt: 0, // 上次加载boss列表的时间戳
+        bossList: [],
         books: [] as MonsterSkillBook[],
         bookMap: {} as Record<number, Record<number, MonsterSkillBook>>,
         skills: [] as MonsterSkill[],
         skillMap: {} as Record<number, MonsterSkill>,
     }),
     actions: {
+        async fetchBossList() {
+            // 每6小时加载一次boss列表
+            if (
+                this.lastFetchBossListAt &&
+                this.lastFetchBossListAt + 6 * 60 * 60 * 1000 > Date.now() &&
+                this.bossList.length
+            ) {
+                return; // 如果已经加载过了，就不再加载
+            }
+            const post = await getJx3boxPost(101669);
+            if (!post || !post.post_content) return;
+            // 解析文章内容
+            const dom = document.createElement("div");
+            dom.innerHTML = post.post_content;
+            const bossListDom = dom.querySelector("[data-type='boss-list']");
+            if (!bossListDom) return;
+            const content = bossListDom.innerHTML.trim();
+            try {
+                const bossListParseResult = JSON.parse(content);
+                this.bossList = bossListParseResult;
+                this.lastFetchBossListAt = Date.now();
+            } catch {}
+        },
         async fetchSkills() {
             // 6小时以内加载过且skills长度不为0，并且软件版本号相同
             if (

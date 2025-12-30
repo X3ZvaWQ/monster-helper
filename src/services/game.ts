@@ -55,7 +55,7 @@ export const getMonsterSkills = async () => {
                     };
                     for (const bossName of raw.szBossName.split(";")) {
                         if (!bossName) continue;
-                        let boss = bossList.find((b) => b.skillAlias === bossName);
+                        let boss = bossList.value.find((b) => b.skillAlias === bossName);
                         if (!boss) continue;
                         if (!skill.belongBoss) skill.belongBoss = [];
                         const name = boss.name.includes("恶战") ? "恶战" : boss.name;

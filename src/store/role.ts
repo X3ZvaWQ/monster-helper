@@ -124,7 +124,7 @@ export const useRoleStore = defineStore("role", {
             result.threeSkillSpiritEndurance = result.spirit;
             // 2. boss 全收集精耐
             const skillIdMap = this.getSkillLevelMap(role).value;
-            for (const { name, coef } of bossList) {
+            for (const { name, coef } of bossList.value) {
                 if (!coef) continue; // 没有精耐系数，跳过
                 let bossSpirit = 0;
                 let bossEndurance = 0;
