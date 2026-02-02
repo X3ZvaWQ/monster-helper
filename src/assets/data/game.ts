@@ -223,7 +223,7 @@ const _bossList = [
     {
         name: "谢云流（青年）",
         alias: [],
-        skillAlias: "青年谢云流",
+        skillAlias: "谢云流·青年",
         coef: [0.5, 0.5],
     },
     {
