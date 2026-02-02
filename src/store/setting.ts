@@ -12,6 +12,7 @@ export const useSettingStore = defineStore("setting", {
             meta: "server" as "server" | "cd",
         },
         stat: {
+            enableEdit: false as boolean,
             dragSortList: [] as string[],
             enableDragSort: false as boolean,
             enableSelect: false as boolean,

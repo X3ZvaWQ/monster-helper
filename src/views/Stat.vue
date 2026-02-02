@@ -14,6 +14,10 @@
                     <n-switch v-model:value="useSettingStore().stat.enableDragSort" :round="false"></n-switch>
                     <n-text>拖拽排序</n-text>
                 </n-flex>
+                <n-flex :wrap="false" :align="'center'" class="shrink-0">
+                    <n-switch v-model:value="useSettingStore().stat.enableEdit" :round="false"></n-switch>
+                    <n-text>编辑模式</n-text>
+                </n-flex>
                 <n-button @click="openSetting" type="primary">表格配置</n-button>
                 <n-popconfirm @positive-click="useRoleStore().resetCd()">
                     <template #trigger>
@@ -67,8 +71,8 @@ import { OnUpdateSorter, TableBaseColumn, TableColumn } from "naive-ui/es/data-t
 import { CSSProperties } from "vue";
 import { useResizeObserver } from "@vueuse/core";
 import { VueDraggable } from "vue-draggable-plus";
-import { cloneDeep } from "lodash";
 import { getSearchKey, matchSearch } from "@/utils/search";
+import EditableValue from "@/components/common/EditableValue.vue";
 
 const filterPattern = ref<Record<string, string>>({
     account: "",
@@ -231,16 +235,29 @@ const columns = computed(() => {
                             })
                         );
                     }
-                    if (item.key == "cd" && row.cd) {
-                        divContent.push(
-                            h(resolveComponent("i-material-symbols:check-rounded"), {
-                                style: {
-                                    ...getStyle(item),
-                                    position: "relative",
-                                    bottom: "2px",
-                                },
-                            })
-                        );
+                    if (item.key == "cd") {
+                        if (useSettingStore().stat.enableEdit) {
+                            divContent.push(
+                                h(resolveComponent("n-checkbox"), {
+                                    checked: row.cd,
+                                    "onUpdate:checked": (value: boolean) => {
+                                        onUpdateRole(row.id, "cd", value);
+                                    },
+                                })
+                            );
+                        } else {
+                            if (row.cd) {
+                                divContent.push(
+                                    h(resolveComponent("i-material-symbols:check-rounded"), {
+                                        style: {
+                                            ...getStyle(item),
+                                            position: "relative",
+                                            bottom: "2px",
+                                        },
+                                    })
+                                );
+                            }
+                        }
                     } else if (item.key === "role") {
                         divContent.push(
                             h(
@@ -318,7 +335,20 @@ const columns = computed(() => {
                         );
                     } else {
                         divContent.push(
-                            h(resolveComponent("n-text"), { style: getStyle(item) }, { default: () => row[key] })
+                            h(
+                                EditableValue,
+                                {
+                                    style: getStyle(item),
+                                    value: row[key],
+                                    type: "string",
+                                    disabled: !useSettingStore().stat.enableEdit,
+                                    hideIcon: true,
+                                    "onUpdate:value": (value: any) => {
+                                        onUpdateRole(row.id, key, value);
+                                    },
+                                },
+                                { default: () => row[key] }
+                            )
                         );
                     }
                 } else if (item.type === "skill") {
@@ -326,8 +356,18 @@ const columns = computed(() => {
 
                     divContent.push(
                         h(
-                            resolveComponent("n-text"),
-                            { style: getStyle(item), class: `level-${skillLevel} u-skill-level` },
+                            EditableValue,
+                            {
+                                style: getStyle(item),
+                                class: `level-${skillLevel} u-skill-level`,
+                                value: skillLevel,
+                                disabled: !useSettingStore().stat.enableEdit,
+                                hideIcon: true,
+                                type: "number",
+                                "onUpdate:value": (value: any) => {
+                                    onUpdateRole(row.id, ["skill", item.skillId], Number(value));
+                                },
+                            },
                             { default: () => (item.level === "levelLabel" ? skillLevelLabel[skillLevel] : skillLevel) }
                         )
                     );
@@ -416,6 +456,28 @@ const columns = computed(() => {
     }
     return result;
 });
+const onUpdateRole = (id: string, key: string | [string, any], value: any) => {
+    if (Array.isArray(key)) {
+        const [scope, scopeId] = key;
+        if (scope === "skill") {
+            const role = useRoleStore().getRoleById(id);
+            const skillId = scopeId;
+            const skill = role?.skills.find((s) => s.id === skillId);
+            if (skill) {
+                skill.level = value;
+            } else {
+                role?.skills.push({
+                    id: skillId,
+                    level: value,
+                });
+            }
+        }
+    } else {
+        useRoleStore().updateRole(id, {
+            [key]: value,
+        });
+    }
+};
 
 // 确保所有角色都在 dragSortList 中
 watch(
@@ -433,11 +495,19 @@ watch(
 const data = computed(() => {
     const roles = useRoleStore().roles;
     const { dragSortList } = useSettingStore().stat;
+    const orderMap = dragSortList.reduce(
+        (acc, id, index) => {
+            acc[id] = index + 1;
+            return acc;
+        },
+        {} as Record<string, number>
+    );
+
     // 按照 dragSortList 排序
-    const sortedRoles = cloneDeep(roles).sort((a, b) => {
-        const indexA = dragSortList.indexOf(a.id!);
-        const indexB = dragSortList.indexOf(b.id!);
-        return (indexA === -1 ? 9999 : indexA) - (indexB === -1 ? 9999 : indexB);
+    const sortedRoles = [...roles].sort((a, b) => {
+        const indexA = orderMap[a.id!] || Number.MAX_SAFE_INTEGER;
+        const indexB = orderMap[b.id!] || Number.MAX_SAFE_INTEGER;
+        return indexA - indexB;
     });
 
     const result: any[] = [];

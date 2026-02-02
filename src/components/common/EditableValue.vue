@@ -1,34 +1,46 @@
 <template>
-    <n-flex v-bind="$attrs" :align="'center'">
-        <slot :value="value">
+    <n-flex
+        v-bind="$attrs"
+        :align="'center'"
+        :class="{ 'flex-row-reverse': reverse, 'cursor-pointer': !disabled && hideIcon }"
+    >
+        <template v-if="!disabled">
+            <slot :value="value" v-if="!hideIcon">
+                <n-text>{{ value }}</n-text>
+            </slot>
+            <n-popover ref="popoverRef" trigger="click" @update:show="onShowChange">
+                <template #trigger>
+                    <n-button text type="primary" v-if="!hideIcon || !value">
+                        <template #icon>
+                            <i-material-symbols:edit-rounded />
+                        </template>
+                    </n-button>
+                    <slot :value="value" v-if="hideIcon && value">
+                        <n-text>{{ value }}</n-text>
+                    </slot>
+                </template>
+                <n-input-group>
+                    <n-input-number
+                        v-if="type === 'number'"
+                        v-bind="$attrs"
+                        ref="inputRef"
+                        @keyup.enter="onEdit"
+                        v-model:value="inputValue"
+                    />
+                    <n-input
+                        v-if="type === 'string'"
+                        v-bind="$attrs"
+                        ref="inputRef"
+                        @keyup.enter="onEdit"
+                        v-model:value="inputValue"
+                    />
+                    <n-button type="primary" ghost @click="onEdit"> 更新 </n-button>
+                </n-input-group>
+            </n-popover>
+        </template>
+        <slot :value="value" v-else>
             <n-text>{{ value }}</n-text>
         </slot>
-        <n-popover ref="popoverRef" trigger="click" @update:show="onShowChange">
-            <template #trigger>
-                <n-button text type="primary">
-                    <template #icon>
-                        <i-material-symbols:edit-rounded />
-                    </template>
-                </n-button>
-            </template>
-            <n-input-group>
-                <n-input-number
-                    v-if="type === 'number'"
-                    v-bind="$attrs"
-                    ref="inputRef"
-                    @keyup.enter="onEdit"
-                    v-model:value="inputValue"
-                />
-                <n-input
-                    v-if="type === 'string'"
-                    v-bind="$attrs"
-                    ref="inputRef"
-                    @keyup.enter="onEdit"
-                    v-model:value="inputValue"
-                />
-                <n-button type="primary" ghost @click="onEdit"> 更新 </n-button>
-            </n-input-group>
-        </n-popover>
     </n-flex>
 </template>
 
@@ -40,9 +52,15 @@ const props = withDefaults(
     defineProps<{
         value: any;
         type?: "number" | "string";
+        hideIcon?: boolean;
+        disabled?: boolean;
+        reverse?: boolean;
     }>(),
     {
         type: "string",
+        hideIcon: false,
+        disabled: false,
+        reverse: false,
     }
 );
 // 更新事件
@@ -69,7 +87,7 @@ const onShowChange = (value: boolean) => {
 };
 const popoverRef = ref<InstanceType<typeof NPopover> | null>(null);
 const onEdit = () => {
-    emits("update:value", inputValue);
+    emits("update:value", inputValue.value);
     popoverRef.value?.setShow(false);
 };
 </script>
