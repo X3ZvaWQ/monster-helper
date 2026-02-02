@@ -12,6 +12,8 @@ export const useSettingStore = defineStore("setting", {
             meta: "server" as "server" | "cd",
         },
         stat: {
+            dragSortList: [] as string[],
+            enableDragSort: false as boolean,
             enableSelect: false as boolean,
             selectRoles: [] as string[],
             hiddenSelected: false as boolean, // 隐藏选择项

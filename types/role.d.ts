@@ -17,8 +17,10 @@ interface Role {
     // 传功计数
     teachCount?: number;
     taughtCount?: number;
-    // 排序
+    // 账号内用的排序
     order?: number;
+    // 表格排序
+    tableOrder?: number;
 }
 
 interface RoleSkill {
@@ -30,4 +32,4 @@ interface InventoryItem {
     itemId: number;
 }
 
-interface SkillBook extends RoleSkill {}
+interface SkillBook extends RoleSkill { }

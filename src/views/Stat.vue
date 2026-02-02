@@ -2,13 +2,17 @@
     <div class="p-stat" ref="pageEl">
         <div class="m-toolbar">
             <n-flex :wrap="false" :align="'center'">
+                <n-flex :wrap="false" :align="'center'" class="shrink-0" v-if="useSettingStore().stat.enableSelect">
+                    <n-switch v-model:value="useSettingStore().stat.hiddenSelected" :round="false"></n-switch>
+                    <n-text>隐藏未选择</n-text>
+                </n-flex>
                 <n-flex :wrap="false" :align="'center'" class="shrink-0">
                     <n-switch v-model:value="useSettingStore().stat.enableSelect" :round="false"></n-switch>
                     <n-text>选择模式</n-text>
                 </n-flex>
-                <n-flex :wrap="false" :align="'center'" class="shrink-0" v-if="useSettingStore().stat.enableSelect">
-                    <n-switch v-model:value="useSettingStore().stat.hiddenSelected" :round="false"></n-switch>
-                    <n-text>隐藏未选择</n-text>
+                <n-flex :wrap="false" :align="'center'" class="shrink-0">
+                    <n-switch v-model:value="useSettingStore().stat.enableDragSort" :round="false"></n-switch>
+                    <n-text>拖拽排序</n-text>
                 </n-flex>
                 <n-button @click="openSetting" type="primary">表格配置</n-button>
                 <n-popconfirm @positive-click="useRoleStore().resetCd()">
@@ -20,22 +24,31 @@
             </n-flex>
         </div>
         <div class="m-data" ref="tableWrapperRef" :style="tableStyle">
-            <n-data-table
-                ref="tableRef"
-                :max-height="maxHeight"
-                :columns="columns"
-                :data="filterData"
-                :bordered="true"
-                :scroll-x="tableWidth"
-                :on-unstable-column-resize="onColumnResize"
-                :row-key="(row) => row.id"
-                v-model:checked-row-keys="useSettingStore().stat.selectRoles"
-                :on-update:sorter="onUpdateSorter"
-            />
+            <VueDraggable
+                v-model="writableFilterData"
+                :animation="150"
+                target=".n-data-table-tbody"
+                handle=".drag-handle"
+                :disabled="!useSettingStore().stat.enableDragSort"
+            >
+                <n-data-table
+                    ref="tableRef"
+                    :max-height="maxHeight"
+                    :columns="columns"
+                    :data="filterData"
+                    :bordered="true"
+                    :scroll-x="tableWidth"
+                    :on-unstable-column-resize="onColumnResize"
+                    :row-key="(row) => row.id"
+                    v-model:checked-row-keys="useSettingStore().stat.selectRoles"
+                    :on-update:sorter="onUpdateSorter"
+                />
+            </VueDraggable>
         </div>
+
+        <stat-setting ref="settingPanel"></stat-setting>
+        <role-detail-dialog ref="roleDetail"></role-detail-dialog>
     </div>
-    <stat-setting ref="settingPanel"></stat-setting>
-    <role-detail-dialog ref="roleDetail"></role-detail-dialog>
 </template>
 
 <script setup lang="ts">
@@ -53,6 +66,8 @@ import { DataTableColumns } from "naive-ui";
 import { OnUpdateSorter, TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
 import { CSSProperties } from "vue";
 import { useResizeObserver } from "@vueuse/core";
+import { VueDraggable } from "vue-draggable-plus";
+import { cloneDeep } from "lodash";
 import { getSearchKey, matchSearch } from "@/utils/search";
 
 const filterPattern = ref<Record<string, string>>({
@@ -63,6 +78,10 @@ const filterPattern = ref<Record<string, string>>({
     cdRemark: "",
 });
 
+// 表格输入框引用
+const filterInputRefs = ref<Record<string, InstanceType<typeof import("naive-ui").NInput> | null>>({});
+
+// 表格列定义
 const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) => {
     const settingColumn = useSettingStore().stat.columns.find(
         (item) =>
@@ -71,8 +90,6 @@ const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) =>
     );
     settingColumn!.width = newWidth;
 };
-
-const filterInputRefs = ref<Record<string, InstanceType<typeof import("naive-ui").NInput> | null>>({});
 const columns = computed(() => {
     const setting = useSettingStore().stat.columns;
     const result: DataTableColumns<StatTableDataRow> = [];
@@ -115,6 +132,24 @@ const columns = computed(() => {
         }
         return style;
     };
+    if (useSettingStore().stat.enableDragSort) {
+        result.push({
+            width: 40,
+            fixed: "left",
+            align: "center",
+            className: "shrink-0",
+            render: () => {
+                return h(
+                    "div",
+                    {
+                        style: "cursor: move; display: flex; align-items: center; justify-content: center; gap: 4px;",
+                        class: "drag-handle",
+                    },
+                    [h(resolveComponent("i-codicon:three-bars"), { style: "font-size: 16px;" })]
+                );
+            },
+        } as unknown as TableColumn<StatTableDataRow>);
+    }
     if (useSettingStore().stat.enableSelect) {
         result.push({
             type: "selection",
@@ -382,10 +417,31 @@ const columns = computed(() => {
     return result;
 });
 
+// 确保所有角色都在 dragSortList 中
+watch(
+    () => useRoleStore().roles.map((r) => r.id),
+    (ids) => {
+        const { dragSortList } = useSettingStore().stat;
+        const newIds = ids.filter((id) => !dragSortList.includes(id!));
+        if (newIds.length) {
+            useSettingStore().stat.dragSortList.push(...(newIds as string[]));
+        }
+    },
+    { immediate: true, deep: true }
+);
+// 表格数据 - 排序后
 const data = computed(() => {
     const roles = useRoleStore().roles;
+    const { dragSortList } = useSettingStore().stat;
+    // 按照 dragSortList 排序
+    const sortedRoles = cloneDeep(roles).sort((a, b) => {
+        const indexA = dragSortList.indexOf(a.id!);
+        const indexB = dragSortList.indexOf(b.id!);
+        return (indexA === -1 ? 9999 : indexA) - (indexB === -1 ? 9999 : indexB);
+    });
+
     const result: any[] = [];
-    for (const role of roles) {
+    for (const role of sortedRoles) {
         const { spirit, endurance, teach } = useRoleStore().calcSpiritAndEndurance(role).value;
         const row: StatTableDataRow = {
             id: role.id!,
@@ -482,6 +538,26 @@ const filterData = computed(() => {
         return true;
     });
 });
+const writableFilterData = computed({
+    get: () => filterData.value,
+    set: (val) => {
+        console.log(val);
+        // 更新 logic
+        const { dragSortList } = useSettingStore().stat;
+        // 1. 获取当前 filterData 所有 ID 在 dragSortList 中的位置
+        const currentIds = filterData.value.map((row) => row.id);
+        const indices = currentIds.map((id) => dragSortList.indexOf(id)).sort((a, b) => a - b);
+
+        // 2. 将新的顺序填入这些位置
+        const newIds = val.map((row) => row.id);
+        const newDragSortList = [...dragSortList];
+
+        for (const [i, index] of indices.entries()) {
+            newDragSortList[index] = newIds[i];
+        }
+        useSettingStore().stat.dragSortList = newDragSortList;
+    },
+});
 const tableStyle = computed((): CSSProperties => {
     return useSettingStore().stat.background.reduce((style, item) => {
         if (item.level !== null) {
@@ -491,7 +567,9 @@ const tableStyle = computed((): CSSProperties => {
     }, {} as CSSProperties);
 });
 
+// 表格排序事件
 const tableRef = ref<InstanceType<typeof import("naive-ui").NDataTable> | null>(null);
+
 const onUpdateSorter: OnUpdateSorter = ({ columnKey, order }) => {
     if (order === false) {
         useSettingStore().stat.sort = [];
