@@ -97,7 +97,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useMessage } from "naive-ui";
+import { useRoute, useRouter } from "vue-router";
 import { chain, orderBy } from "lodash";
 import RoleCreateDialog from "../components/role/RoleCreateDialog.vue";
 import RoleDetailDialog from "../components/role/RoleDetailDialog.vue";
@@ -108,6 +110,10 @@ import { useSettingStore } from "@/store/setting";
 import { VueDraggable } from "vue-draggable-plus";
 
 const createDialog = ref<InstanceType<typeof RoleCreateDialog> | null>(null);
+const message = useMessage();
+const route = useRoute();
+const router = useRouter();
+
 const onCreateRole = () => {
     if (!createDialog.value) return;
     createDialog.value.open();
@@ -165,6 +171,21 @@ const roleList = computed({
         useRoleStore().accountOrder = v.map((item) => item.account);
     },
 });
+
+watch(
+    () => route.query,
+    () => {
+        if (route.query.action === "create") {
+            message.warning("请先创建/导入你的角色");
+            // 清除 query 参数
+            router.replace({ query: { ...route.query, action: undefined } });
+            nextTick(() => {
+                onCreateRole();
+            });
+        }
+    },
+    { immediate: true }
+);
 </script>
 
 <style lang="less" scoped>

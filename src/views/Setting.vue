@@ -68,6 +68,10 @@ import { useSettingStore } from "@/store/setting";
 import { version } from "../../package.json";
 import { useCheckUpdate } from "@/utils/use/update";
 import { useGameStore } from "@/store/game";
+import { useRoute, useRouter } from "vue-router";
+
+const route = useRoute();
+const router = useRouter();
 
 const message = useMessage();
 const exportDialog = ref<InstanceType<typeof ExportDialog> | null>(null);
@@ -86,6 +90,20 @@ const { checkUpdate } = useCheckUpdate(notification);
 const doCheckUpdate = () => {
     checkUpdate();
 };
+
+watch(
+    () => route.query,
+    () => {
+        if (route.query.action === "import") {
+            nextTick(() => {
+                importDialog.value?.open();
+            });
+            // 清除 query 参数
+            router.replace({ query: { ...route.query, action: undefined } });
+        }
+    },
+    { immediate: true }
+);
 </script>
 
 <style lang="less" scoped></style>

@@ -10,7 +10,7 @@
         </div>
         <n-menu
             class="c-sidebar-menu"
-            v-model:value="menuValue"
+            :value="menuValue"
             :options="items"
             :collapsed="!isExpand"
             :collapsed-width="64"
@@ -61,18 +61,11 @@ const items = reactive([
     },
 ]);
 
-const menuValue = ref("home");
 const route = useRoute();
-watch(
-    () => [route.name, route.meta],
-    () => {
-        const menuName = route.meta?.menu || route.name;
-        if (menuName && menuValue.value != menuName) {
-            menuValue.value = menuName as string;
-        }
-    },
-    { immediate: true }
-);
+const menuValue = computed(() => {
+    const menuName = route.meta?.menu || route.name;
+    return menuName as string;
+});
 
 // 伸缩逻辑
 const isExpand = computed(() => useSettingStore().menu.collapsed === false);

@@ -19,13 +19,21 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/views/StatBoss.vue"),
         beforeEnter(to, _, next) {
             const roleId = to.params.roleId;
+            const roleStore = useRoleStore();
             if (roleId) {
                 next();
+            } else if (roleStore.roles.length === 0) {
+                next({
+                    name: "role",
+                    query: {
+                        action: "create",
+                    },
+                });
             } else {
                 next({
                     name: "stat-boss",
                     params: {
-                        roleId: useRoleStore().roles[0]?.id,
+                        roleId: roleStore.roles[0]?.id,
                     },
                 });
             }

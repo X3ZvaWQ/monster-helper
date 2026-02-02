@@ -7,9 +7,17 @@
         negative-text="取消"
         :closable="true"
         :show-icon="false"
-        @positive-click="onConfirm"
         @negative-click="visible = false"
     >
+        <template #action>
+            <div class="flex justify-between w-full">
+                <n-button text type="primary" @click="onImport"> 导入 </n-button>
+                <n-flex>
+                    <n-button @click="visible = false">取消</n-button>
+                    <n-button type="primary" @click="onConfirm">确定</n-button>
+                </n-flex>
+            </div>
+        </template>
         <n-form ref="form" :model="formData" :rules="rules" label-placement="left" label-width="auto">
             <n-form-item label="id" v-if="isEdit">
                 <n-input v-model:value="formData.id" disabled />
@@ -66,6 +74,9 @@ import { nanoid } from "nanoid";
 import { getSearchKey, matchSearch } from "@/utils/search";
 import type { FormInst, FormRules } from "naive-ui";
 import { defaultRole } from "@/assets/data/role";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 // 账号选项
 const accountOptions = computed(() => {
@@ -116,7 +127,10 @@ const onConfirm = () => {
                 visible.value = false;
             } else {
                 const role = useRoleStore().getRoleById(formData.value.id!)!;
-                Object.assign(role, pick(formData.value, ["account", "server", "schoolId", "gender", "name", "remark"]));
+                Object.assign(
+                    role,
+                    pick(formData.value, ["account", "server", "schoolId", "gender", "name", "remark"])
+                );
             }
         }
     });
@@ -132,6 +146,16 @@ const open = (role?: Role) => {
 const isEdit = computed(() => {
     return !!formData.value.id;
 });
+
+const onImport = () => {
+    visible.value = false;
+    router.push({
+        name: "setting",
+        query: {
+            action: "import",
+        },
+    });
+};
 
 const formData = ref(cloneDeep(defaultRole));
 

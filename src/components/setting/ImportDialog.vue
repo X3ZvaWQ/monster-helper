@@ -1,7 +1,7 @@
 <template>
     <n-modal
         v-model:show="visible"
-        title="导出数据"
+        title="导入数据"
         preset="dialog"
         :closable="true"
         :show-icon="false"
