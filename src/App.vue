@@ -1,5 +1,5 @@
 <template>
-    <n-config-provider :theme="themeRef" :locale="zhCN" :inline-theme-disabled="true">
+    <n-config-provider :theme="currentTheme" :locale="zhCN" :inline-theme-disabled="true">
         <n-global-style />
         <n-message-provider>
             <n-notification-provider>
@@ -19,24 +19,13 @@
 <script lang="ts" setup>
 import SideBar from "./components/common/SideBar.vue";
 import { useGameStore } from "@/store/game";
-import { useSettingStore } from "./store/setting";
-import { lightTheme, darkTheme, useOsTheme, zhCN } from "naive-ui";
+import { zhCN } from "naive-ui";
+import { currentTheme } from "@/utils/theme";
 
 onMounted(() => {
     const gameStore = useGameStore();
     gameStore.fetchSkills();
     gameStore.fetchBossList();
-});
-
-const osThemeRef = useOsTheme();
-const themeRef = computed(() => {
-    let theme = useSettingStore().theme;
-    // 如果主题是 os，则使用系统主题
-    if (theme === "os") {
-        theme = osThemeRef.value;
-    }
-    if (theme === "dark") return darkTheme;
-    else return lightTheme;
 });
 </script>
 
