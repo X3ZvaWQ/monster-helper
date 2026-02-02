@@ -541,7 +541,6 @@ const filterData = computed(() => {
 const writableFilterData = computed({
     get: () => filterData.value,
     set: (val) => {
-        console.log(val);
         // 更新 logic
         const { dragSortList } = useSettingStore().stat;
         // 1. 获取当前 filterData 所有 ID 在 dragSortList 中的位置

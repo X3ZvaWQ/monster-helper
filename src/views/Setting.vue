@@ -82,6 +82,7 @@ const onResetSetting = () => {
 };
 const onResetGameData = () => {
     useGameStore().$reset();
+    localStorage.removeItem("game");
     location.reload();
 };
 
