@@ -1,6 +1,7 @@
 import { defaultStatColumns } from "@/assets/data/setting";
 import { cloneDeep } from "lodash";
 
+// 用户设置，随导入导出走的
 export const useSettingStore = defineStore("setting", {
     state: () => ({
         theme: "light" as "light" | "dark" | "os" | null,

@@ -5,6 +5,7 @@ import { SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
 import { getCurrentVersion } from "@/utils/update";
 import { getJx3boxPost } from "@/services/jx3box";
 
+// 游戏设置，不同步，随时从线上拉的
 export const useGameStore = defineStore("game", {
     state: () => ({
         lastUpdatedAt: 0, // 上次更新游戏数据的时间戳
@@ -39,7 +40,7 @@ export const useGameStore = defineStore("game", {
                 const bossListParseResult = JSON.parse(content);
                 this.bossList = bossListParseResult;
                 this.lastFetchBossListAt = Date.now();
-            } catch {}
+            } catch { }
         },
         async fetchSkills() {
             // 6小时以内加载过且skills长度不为0，并且软件版本号相同

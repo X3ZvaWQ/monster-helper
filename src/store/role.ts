@@ -30,6 +30,7 @@ const spiritAndEnduranceCache = new Map<string, ComputedRef<SpiritAndEnduranceCa
 const skillLevelMapCache = new Map<string, ComputedRef<Record<number, number>>>();
 const roleBookMapCache = new Map<string, ComputedRef<Record<number, Record<number, number>>>>();
 
+// 用户角色数据
 export const useRoleStore = defineStore("role", {
     state: () => ({
         roles: [] as Role[],
