@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddCustomStat: typeof import('./../src/components/stat/AddCustomStat.vue')['default']
     BookList: typeof import('./../src/components/role/BookList.vue')['default']
     BookParse: typeof import('./../src/components/role/BookParse.vue')['default']
     EditableValue: typeof import('./../src/components/common/EditableValue.vue')['default']
@@ -18,6 +19,7 @@ declare module 'vue' {
     'ICodicon:threeBars': typeof import('~icons/codicon/three-bars')['default']
     'IGameIcons:fishMonster': typeof import('~icons/game-icons/fish-monster')['default']
     'IGrommetIcons:system': typeof import('~icons/grommet-icons/system')['default']
+    'IIc:baselineAdd': typeof import('~icons/ic/baseline-add')['default']
     'IIc:baselineBeachAccess': typeof import('~icons/ic/baseline-beach-access')['default']
     'IIc:roundClear': typeof import('~icons/ic/round-clear')['default']
     'IIconamoon:modeLight': typeof import('~icons/iconamoon/mode-light')['default']
@@ -53,6 +55,7 @@ declare module 'vue' {
     'IMingcute:qqFill': typeof import('~icons/mingcute/qq-fill')['default']
     ImportDialog: typeof import('./../src/components/setting/ImportDialog.vue')['default']
     'IOoui:draggable': typeof import('~icons/ooui/draggable')['default']
+    'IQuill:userSad': typeof import('~icons/quill/user-sad')['default']
     'IRi:expandLeftLine': typeof import('~icons/ri/expand-left-line')['default']
     'IRi:expandRightLine': typeof import('~icons/ri/expand-right-line')['default']
     ManualEditDialog: typeof import('./../src/components/role/ManualEditDialog.vue')['default']

@@ -54,6 +54,7 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/mingcute": "^1.2.3",
     "@iconify-json/ooui": "^1.2.8",
+    "@iconify-json/quill": "^1.2.4",
     "@iconify-json/ri": "^1.2.5",
     "@tauri-apps/cli": "^2.6.2",
     "@types/file-saver": "^2.0.7",

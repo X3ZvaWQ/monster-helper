@@ -50,12 +50,22 @@ interface SkillStatSetting extends BaseStatSetting {
     level?: "number" | "levelLabel";
 }
 
+interface CustomStatSetting extends BaseStatSetting {
+    type: "custom";
+    key: string;
+    label: string;
+    refresh: boolean;
+    valueType: "boolean" | "number" | "string";
+    default: any;
+}
+
 type StatSetting =
     | BasicCdStatSetting
     | BasicTeachStatSetting
     | BasicRoleStatSetting
     | BasicStatSetting
-    | SkillStatSetting;
+    | SkillStatSetting
+    | CustomStatSetting;
 
 interface StatTableDataRow {
     id: string;
@@ -72,6 +82,7 @@ interface StatTableDataRow {
     remark: string;
     teach: [number, string[]][];
     [key: `skill-${number}`]: number;
+    [key: `custom-${string}`]: any;
     [key: `skill-book-${number}`]: number[];
     roleSearchKey?: string;
     default: "-";

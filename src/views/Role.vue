@@ -38,7 +38,7 @@
                 <template #trigger>
                     <n-button type="warning">新的一周</n-button>
                 </template>
-                该操作会重置所有角色的百战CD和传功/被传功计数，周一的时候点一点就好，不可撤销哦~
+                该操作会重置所有角色的百战CD/传功/被传功计数/自定义的随CD刷新列，周一的时候点一点就好，不可撤销哦~
             </n-popconfirm>
         </n-flex>
 

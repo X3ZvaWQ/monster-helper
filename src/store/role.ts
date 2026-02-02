@@ -8,6 +8,7 @@ import {
 } from "@/assets/data/game";
 import { useGameStore } from "./game";
 import { chain, countBy, sum } from "lodash";
+import { useSettingStore } from "./setting";
 
 interface SpiritAndEnduranceCalcResult {
     spirit: number;
@@ -38,11 +39,18 @@ export const useRoleStore = defineStore("role", {
     }),
     actions: {
         resetCd() {
+            const customColumns = useSettingStore().stat.columns.filter((item) => item.type === "custom" && item.refresh) as CustomStatSetting[];
             this.roles.forEach((role) => {
                 role.cd = false; // 重置百战CD
                 role.cdRemark = ""; // 重置百战CD备注
                 role.teachCount = 20; // 重置传功计数
                 role.taughtCount = 0; // 重置被传功计数
+                if (role.customValue) {
+                    customColumns.forEach((column) => {
+                        role.customValue![column.key] = column.default;
+                    });
+                }
+
             });
         },
         deleteRole(id: string) {

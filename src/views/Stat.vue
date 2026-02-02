@@ -23,7 +23,7 @@
                     <template #trigger>
                         <n-button type="warning">新的一周</n-button>
                     </template>
-                    该操作会重置所有角色的百战CD和传功/被传功计数，周一的时候点一点就好，不可撤销哦~
+                    该操作会重置所有角色的百战CD/传功/被传功计数/自定义的随CD刷新列，周一的时候点一点就好，不可撤销哦~
                 </n-popconfirm>
             </n-flex>
         </div>
@@ -90,7 +90,8 @@ const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) =>
     const settingColumn = useSettingStore().stat.columns.find(
         (item) =>
             (item.type === "basic" && item.key === column.key) ||
-            (item.type === "skill" && `skill-${item.skillId}` === column.key)
+            (item.type === "skill" && `skill-${item.skillId}` === column.key) ||
+            (item.type === "custom" && `custom-${item.key}` === column.key)
     );
     settingColumn!.width = newWidth;
 };
@@ -101,6 +102,7 @@ const columns = computed(() => {
     const getColumnKey = (item: StatSetting): keyof StatTableDataRow => {
         if (item.type === "basic") return item.key;
         if (item.type === "skill") return `skill-${item.skillId}`;
+        if (item.type === "custom") return `custom-${item.key}`;
         return "default";
     };
     const getColumnLabel = (item: StatSetting) => {
@@ -214,6 +216,15 @@ const columns = computed(() => {
                             )
                         );
                     }
+                }
+                if (item.type === "custom") {
+                    divContent.push(
+                        h(
+                            resolveComponent("n-text"),
+                            { style: getStyle(item) },
+                            { default: () => getColumnLabel(item) }
+                        )
+                    );
                 }
                 return h(
                     "div",
@@ -341,7 +352,9 @@ const columns = computed(() => {
                                     style: getStyle(item),
                                     value: row[key],
                                     type: "string",
-                                    disabled: !useSettingStore().stat.enableEdit,
+                                    disabled:
+                                        !useSettingStore().stat.enableEdit ||
+                                        !["cdRemark", "remark"].includes(item.key),
                                     hideIcon: true,
                                     "onUpdate:value": (value: any) => {
                                         onUpdateRole(row.id, key, value);
@@ -391,6 +404,45 @@ const columns = computed(() => {
                                         }),
                                 }
                             )
+                        );
+                    }
+                } else if (item.type === "custom") {
+                    const value = row[`custom-${item.key}`];
+                    if (item.valueType === "boolean") {
+                        if (useSettingStore().stat.enableEdit) {
+                            divContent.push(
+                                h(resolveComponent("n-checkbox"), {
+                                    checked: value,
+                                    "onUpdate:checked": (newValue: boolean) => {
+                                        onUpdateRole(row.id, ["custom", item.key], newValue);
+                                    },
+                                })
+                            );
+                        } else {
+                            if (value) {
+                                divContent.push(
+                                    h(resolveComponent("i-material-symbols:check-rounded"), {
+                                        style: {
+                                            ...getStyle(item),
+                                            position: "relative",
+                                            bottom: "2px",
+                                        },
+                                    })
+                                );
+                            }
+                        }
+                    } else {
+                        divContent.push(
+                            h(EditableValue, {
+                                style: getStyle(item),
+                                value,
+                                type: item.valueType,
+                                disabled: !useSettingStore().stat.enableEdit,
+                                hideIcon: true,
+                                "onUpdate:value": (newValue: any) => {
+                                    onUpdateRole(row.id, ["custom", item.key], newValue);
+                                },
+                            })
                         );
                     }
                 }
@@ -471,6 +523,10 @@ const onUpdateRole = (id: string, key: string | [string, any], value: any) => {
                     level: value,
                 });
             }
+        } else if (scope === "custom") {
+            const role = useRoleStore().getRoleById(id)!;
+            if (!role.customValue) role.customValue = {};
+            role.customValue[scopeId] = value;
         }
     } else {
         useRoleStore().updateRole(id, {
@@ -556,6 +612,8 @@ const data = computed(() => {
                         row[`skill-book-${column.skillId}`].push(...hasHigherBookLevel);
                     }
                 }
+            } else if (column.type === "custom") {
+                row[`custom-${column.key}`] = role.customValue?.[column.key];
             }
         }
 

@@ -3,7 +3,17 @@
         <n-drawer-content title="表格配置">
             <n-tabs type="line" default-value="column" animated>
                 <n-tab-pane name="column" tab="表格列配置">
-                    <n-h6 prefix="bar"> 基本信息 </n-h6>
+                    <n-h6 prefix="bar" class="flex justify-between items-center">
+                        <span>基本信息</span>
+                        <n-button @click="onAddCustomStat()" size="tiny">
+                            <template #icon>
+                                <n-icon>
+                                    <i-ic:baseline-add />
+                                </n-icon>
+                            </template>
+                            自定义属性
+                        </n-button>
+                    </n-h6>
                     <n-flex>
                         <n-button
                             :key="index"
@@ -32,6 +42,10 @@
                                 <i-ic:baseline-beach-access />
                                 <div class="u-setting-name">{{ column.label }}</div>
                             </template>
+                            <template class="u-custom" v-if="column.type === 'custom'">
+                                <i-quill:user-sad />
+                                <div class="u-setting-name">{{ column.label }}</div>
+                            </template>
                             <template v-if="column.type === 'skill'">
                                 <n-image
                                     preview-disabled
@@ -41,26 +55,14 @@
                                 </n-image>
                                 <div class="u-setting-name">{{ useGameStore().getSkillById(column.skillId).name }}</div>
                             </template>
-                            <n-popover trigger="click">
+
+                            <n-popover trigger="click" v-if="column.type != 'custom'">
                                 <template #trigger>
                                     <n-button text type="primary">
                                         <i-material-symbols:settings-rounded />
                                     </n-button>
                                 </template>
                                 <div class="m-stat-item-setting">
-                                    <!-- <n-flex justify="space-between" :align="'center'">
-                                        <div class="u-item-label">文字样式</div>
-                                        <div class="u-item-value">全局样式（暂不支持修改）</div>
-                                    </n-flex>
-                                    <n-flex justify="space-between" :align="'center'">
-                                        <div class="u-item-label">列宽</div>
-                                        <div class="u-item-value">
-                                            <n-input-number
-                                                v-model:value="column.width"
-                                                size="small"
-                                            />
-                                        </div>
-                                    </n-flex> -->
                                     <n-flex justify="space-between" :align="'center'" v-if="column.type === 'basic'">
                                         <div class="u-item-label">冻结列</div>
                                         <div class="u-item-value">
@@ -173,10 +175,19 @@
                                     </n-flex>
                                 </div>
                             </n-popover>
+                            <n-button v-else text type="primary" @click="onAddCustomStat(column)">
+                                <i-material-symbols:settings-rounded />
+                            </n-button>
 
-                            <n-button text type="warning" @click="removeColumn(column)">
+                            <n-button text type="warning" @click="removeColumn(column)" v-if="column.type != 'custom'">
                                 <i-material-symbols:delete-rounded />
                             </n-button>
+                            <n-popconfirm @positive-click="removeColumn(column)" v-else>
+                                <template #trigger>
+                                    <n-button text type="warning"><i-material-symbols:delete-rounded /></n-button>
+                                </template>
+                                自定义列删除操作不可逆，你会丢失该列所有的记录！请确认操作
+                            </n-popconfirm>
                         </div>
                     </vue-draggable>
                 </n-tab-pane>
@@ -271,6 +282,7 @@
             </n-tabs>
         </n-drawer-content>
     </n-drawer>
+    <add-custom-stat ref="addCustomStatRef"></add-custom-stat>
 </template>
 
 <script setup lang="ts">
@@ -280,6 +292,8 @@ import { useGameStore } from "@/store/game";
 import { VueDraggable } from "vue-draggable-plus";
 import { iconLink } from "@/utils/game";
 import type { CSSProperties } from "vue";
+import AddCustomStat from "./AddCustomStat.vue";
+import { nanoid } from "nanoid";
 
 // 基础信息选择项
 const basicSelects = ref([
@@ -334,6 +348,31 @@ const onBasicSelectToggle = (item: { label: string; value: string; check: boolea
         ];
     }
 };
+
+const addCustomStatRef = ref<InstanceType<typeof AddCustomStat>>();
+const onAddCustomStat = (column?: CustomStatSetting) => {
+    addCustomStatRef.value
+        ?.open(column)
+        .then((value: any) => {
+            if (value.key) {
+                const currentColumn = useSettingStore().stat.columns.find(
+                    (column) => column.type === "custom" && column.key === value.key
+                );
+                if (currentColumn) {
+                    Object.assign(currentColumn, value);
+                }
+            } else {
+                const key = nanoid();
+                useSettingStore().stat.columns.unshift({
+                    ...value,
+                    type: "custom",
+                    key,
+                });
+            }
+        })
+        .catch(() => {});
+};
+
 // 更新技能等级列
 watch(skillLevelSelects, () => {
     // 先移除不存在的技能列
@@ -356,7 +395,7 @@ watch(skillLevelSelects, () => {
 watch(
     () => useSettingStore().stat.skillColumnWidth,
     () => {
-        if(!useSettingStore().stat.skillColumnWidth) return;
+        if (!useSettingStore().stat.skillColumnWidth) return;
         useSettingStore().stat.columns = useSettingStore().stat.columns.map((column) => {
             if (column.type === "skill") {
                 column.width = useSettingStore().stat.skillColumnWidth;
@@ -382,6 +421,10 @@ const removeColumn = (column: StatSetting) => {
         skillLevelSelects.value = skillLevelSelects.value.filter((id) => id !== column.skillId);
         useSettingStore().stat.columns = useSettingStore().stat.columns.filter(
             (c) => !(c.type === "skill" && c.skillId === column.skillId)
+        );
+    } else if (column.type === "custom") {
+        useSettingStore().stat.columns = useSettingStore().stat.columns.filter(
+            (c) => !(c.type === "custom" && c.label === column.label)
         );
     }
 };
