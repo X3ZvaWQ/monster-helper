@@ -51,6 +51,9 @@ export const useOcrService = async (): Promise<{
             } else {
                 const handler = handlers.get(id)!;
                 handler(type, data);
+                if (data?.result || data?.error) {
+                    handlers.delete(id);
+                }
             }
         };
         ocrWorker.postMessage({ type: "init" });
