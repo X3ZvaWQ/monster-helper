@@ -373,7 +373,7 @@ const buildMask = (score: Uint8ClampedArray, threshold: number) => {
     return mask;
 };
 
-const removeSmallComponents = (mask: Uint8Array, width: number, minArea: number): Uint8Array<ArrayBuffer> => {
+const removeSmallComponents = (mask: Uint8Array, width: number, minArea: number): Uint8Array => {
     const visited = new Uint8Array(mask.length);
     const nextMask = new Uint8Array(mask);
     const neighbors = [-width - 1, -width, -width + 1, -1, 1, width - 1, width, width + 1];
@@ -425,9 +425,9 @@ const removeSquareArtifacts = (
     width: number,
     height: number,
     config: OcrProfileConfig
-): Uint8Array<ArrayBuffer> => {
+): Uint8Array => {
     if (!config.squareArtifactMinSize || !config.squareArtifactMaxSize) {
-        return mask as Uint8Array<ArrayBuffer>;
+        return mask;
     }
 
     const visited = new Uint8Array(mask.length);
@@ -505,9 +505,9 @@ const removeLineArtifacts = (
     width: number,
     height: number,
     config: OcrProfileConfig
-): Uint8Array<ArrayBuffer> => {
+): Uint8Array => {
     if (!config.lineArtifactMaxThickness || !config.lineArtifactMinLength) {
-        return mask as Uint8Array<ArrayBuffer>;
+        return mask;
     }
 
     const visited = new Uint8Array(mask.length);
@@ -577,9 +577,9 @@ const removeEdgeLineRuns = (
     width: number,
     height: number,
     config: OcrProfileConfig
-): Uint8Array<ArrayBuffer> => {
+): Uint8Array => {
     if (!config.edgeLineGuard || !config.edgeLineMinRunRatio) {
-        return mask as Uint8Array<ArrayBuffer>;
+        return mask;
     }
 
     const nextMask = new Uint8Array(mask);
