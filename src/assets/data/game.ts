@@ -250,6 +250,12 @@ const _bossList = [
         skillAlias: "肖红",
         coef: [0.8, 0.2],
     },
+    {
+        name: "罗伊客",
+        alias: [],
+        skillAlias: "罗伊客",
+        coef: [0.4, 0.6],
+    },
 ] as const;
 
 export const bossList = computed(() => {

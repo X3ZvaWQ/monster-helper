@@ -13,5 +13,8 @@ export const iconLink = (id: number, category: "default" | "school" = "default")
     if (category === "school") {
         return schoolIconLink(id as unknown as SchoolIds);
     }
+    if (id === -1) {
+        return `https://icon.jx3box.com/icon/null.png`;
+    }
     return `https://icon.jx3box.com/icon/${id}.png`;
 };
