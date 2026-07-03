@@ -97,7 +97,6 @@ watch(
             bitmap,
             {
                 charWhiteList,
-                preprocessProfile: "bookLog",
                 debugStages: debugEnabled.value,
             },
             (_, data) => {

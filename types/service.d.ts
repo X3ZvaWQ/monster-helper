@@ -46,8 +46,6 @@ interface OcrDebugTransform {
     sourceHeight: number;
 }
 
-type OcrPreprocessProfile = "skillPanel" | "bookLog";
-
 interface OcrDebugStage {
     label: string;
     dataUrl: string;
@@ -66,7 +64,6 @@ interface OcrInput {
 
 interface OcrInputOptions {
     charWhiteList?: string[];
-    preprocessProfile?: OcrPreprocessProfile;
     debugStages?: boolean;
 }
 

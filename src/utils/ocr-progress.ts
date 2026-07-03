@@ -53,6 +53,10 @@ export const getOcrProgressSummaryLines = (state: OcrProgressState): string[] =>
 };
 
 const getPreprocessLine = (snapshot?: OcrProgressSnapshot) => {
+    if (!snapshot) {
+        return "图片预处理已跳过";
+    }
+
     if (snapshot?.stage === "complete") {
         return "图片预处理完毕";
     }

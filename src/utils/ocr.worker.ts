@@ -1,9 +1,8 @@
 import * as ort from "onnxruntime-web"; // Use onnxruntime-web for browser compatibility
-import det_onnx_url from "@/assets/onnx/PP-OCRv5_mobile_det_infer.onnx?url";
-import rec_onnx_url from "@/assets/onnx/PP-OCRv5_mobile_rec_infer.onnx?url";
-import ppocr_dict_url from "@/assets/onnx/ppocrv5_dict.txt?url";
-import { PaddleOcrService, type PaddleOcrProgressEvent, type RecognitionResult } from "paddleocr";
-import { preprocessBitmapForOcr } from "@/utils/ocr-preprocess";
+import det_onnx_url from "@/assets/onnx/PP-OCRv6_small_det_infer.onnx?url";
+import rec_onnx_url from "@/assets/onnx/PP-OCRv6_small_rec_infer.onnx?url";
+import ppocr_dict_url from "@/assets/onnx/ppocrv6_dict.txt?url";
+import { PaddleOcrService, type OrtModule, type PaddleOcrProgressEvent, type RecognitionResult } from "paddleocr";
 
 let paddleOcrService: PaddleOcrService;
 
@@ -45,6 +44,52 @@ const postProgress = (id: string, type: string, progress: OcrProgressSnapshot) =
     });
 };
 
+const createImageInput = (bitmap: ImageBitmap, debugStages?: boolean) => {
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+
+    if (!context) {
+        throw new Error("Unable to create OCR input canvas");
+    }
+
+    context.drawImage(bitmap, 0, 0);
+    const imageData = context.getImageData(0, 0, bitmap.width, bitmap.height);
+    const stages = debugStages
+        ? [{
+            label: "input",
+            dataUrl: "",
+            width: bitmap.width,
+            height: bitmap.height,
+        } satisfies OcrDebugStage]
+        : [];
+
+    return {
+        input: {
+            width: imageData.width,
+            height: imageData.height,
+            data: new Uint8Array(imageData.data.buffer, imageData.data.byteOffset, imageData.data.byteLength),
+        },
+        stages,
+        canvas,
+    };
+};
+
+const fillDebugStageDataUrls = async (stages: OcrDebugStage[], canvas: OffscreenCanvas) => {
+    if (!stages.length) {
+        return stages;
+    }
+
+    const blob = await canvas.convertToBlob({ type: "image/png" });
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error ?? new Error("Unable to serialize OCR debug image"));
+        reader.readAsDataURL(blob);
+    });
+
+    return stages.map((stage) => ({ ...stage, dataUrl }));
+};
+
 // biome-ignore lint/suspicious/noGlobalAssign: worker就是这么写的
 onmessage = async (event) => {
     const { data } = event;
@@ -59,7 +104,8 @@ onmessage = async (event) => {
                 .then((res) => res.text())
                 .then((text) => text.split("\n").map((char) => char.trim()));
             paddleOcrService = await PaddleOcrService.createInstance({
-                ort: ort,
+                ort: ort as unknown as OrtModule,
+                modelPreset: "PP-OCRv6_small",
                 detection: {
                     modelBuffer: det_onnx_buffer,
                 },
@@ -78,45 +124,21 @@ onmessage = async (event) => {
         try {
             const { bitmap, options } = data as OcrInput;
             postMessage({ id, type: "skill", data: { msg: "图片读取成功~" } satisfies OcrWorkerData });
-            postProgress(id, type, {
-                phase: "preprocess",
-                stage: "start",
-                current: 0,
-                total: 1,
-                remain: 1,
-            });
-            const preprocessProfile = options?.preprocessProfile ?? "skillPanel";
-            const preprocessed = await preprocessBitmapForOcr(bitmap, preprocessProfile, options?.debugStages);
-            postMessage({ id, type: "skill", data: { msg: "图片预处理完毕~" } satisfies OcrWorkerData });
-            postProgress(id, type, {
-                phase: "preprocess",
-                stage: "complete",
-                current: 1,
-                total: 1,
-                remain: 0,
-            });
+            const { input, stages, canvas } = createImageInput(bitmap, options?.debugStages);
 
-            if (preprocessed.debugStages.length) {
+            if (stages.length) {
                 postMessage({
                     id,
                     type: "skill",
                     data: {
-                        debugStages: preprocessed.debugStages,
+                        debugStages: await fillDebugStageDataUrls(stages, canvas),
                     } satisfies OcrWorkerData,
                 });
             }
 
             postMessage({ id, type: "skill", data: { msg: "OCR处理中~" } satisfies OcrWorkerData });
             const ocrResult = await paddleOcrService.recognize(
-                {
-                    width: preprocessed.imageData.width,
-                    height: preprocessed.imageData.height,
-                    data: new Uint8Array(
-                        preprocessed.imageData.data.buffer,
-                        preprocessed.imageData.data.byteOffset,
-                        preprocessed.imageData.data.byteLength
-                    ),
-                },
+                input,
                 {
                     detection: {
                         minimumAreaThreshold: 40,

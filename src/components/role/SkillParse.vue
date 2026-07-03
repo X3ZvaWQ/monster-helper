@@ -98,7 +98,6 @@ watch(
             bitmap,
             {
                 charWhiteList,
-                preprocessProfile: "skillPanel",
                 debugStages: debugEnabled.value,
             },
             (_, data) => {
