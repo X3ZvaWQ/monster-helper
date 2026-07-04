@@ -4,7 +4,7 @@
         <n-message-provider>
             <n-notification-provider>
                 <n-dialog-provider>
-                    <main class="c-layout">
+                    <main class="c-layout" :style="appThemeStyle">
                         <SideBar />
                         <div class="c-container">
                             <router-view></router-view>
@@ -21,6 +21,12 @@ import SideBar from "./components/common/SideBar.vue";
 import { useGameStore } from "@/store/game";
 import { zhCN } from "naive-ui";
 import { currentTheme } from "@/utils/theme";
+import type { CSSProperties } from "vue";
+
+const appThemeStyle = computed<CSSProperties>(() => ({
+    "--m-scrollbar-color": currentTheme.value.common.scrollbarColor,
+    "--m-scrollbar-color-hover": currentTheme.value.common.scrollbarColorHover,
+} as CSSProperties));
 
 onMounted(() => {
     const gameStore = useGameStore();

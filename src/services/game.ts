@@ -85,3 +85,68 @@ export const getMonsterBooks = async () => {
             return res.data as ResponseData<MonsterSkillBook>;
         });
 };
+
+export interface MonsterBossRaw {
+    dwIndex: number;
+    nGroup: number;
+    dwNpcID: number;
+    dwProgressID: number;
+    szName: string | null;
+    szSkill: number[] | null;
+    ImagePath: string;
+    ImageFrame: number;
+}
+
+export const getMonsterBosses = async () => {
+    return fetch(`${url.node}/monster/boss`)
+        .then((res) => res.json())
+        .then((res) => {
+            return res as ResponseData<MonsterBossRaw>;
+        });
+};
+
+export interface MonsterEffectRaw {
+    nID: number;
+    dwIconID: number;
+    szName: string;
+    szDescription: string;
+}
+
+export const getMonsterEffects = async () => {
+    return fetch(`${url.node}/monster/effects`)
+        .then((res) => res.json())
+        .then((res) => {
+            return res as ResponseData<MonsterEffectRaw>;
+        });
+};
+
+export interface WeeklyMonsterMapRawFloor {
+    dwBossID: number;
+    nEffectID: number;
+    bCanGetBuff: boolean;
+    nLevelState: number;
+}
+
+export interface WeeklyMonsterMapRaw {
+    id: number;
+    user_id: number;
+    start: string;
+    data: WeeklyMonsterMapRawFloor[];
+    extra?: Record<string, unknown>;
+    enable: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export const getWeeklyMonsterMap = async () => {
+    return fetch(`${url.cms}/api/cms/app/monster/map`)
+        .then((res) => res.json())
+        .then((res) => {
+            return res as {
+                code: number;
+                msg: string;
+                data: WeeklyMonsterMapRaw;
+            };
+        });
+};

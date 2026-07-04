@@ -43,5 +43,8 @@ export const useSettingStore = defineStore("setting", {
             hiddenCollectedBoss: true as boolean, // 隐藏已收集
             hiddenAddon: false as boolean, // 隐藏附带的防御技能
         },
+        map: {
+            range: "last50" as "all" | "last50" | "last30",
+        },
     }),
 });

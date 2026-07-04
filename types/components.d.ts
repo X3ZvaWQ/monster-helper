@@ -36,6 +36,7 @@ declare module 'vue' {
     'IMaterialSymbols:infoOutline': typeof import('~icons/material-symbols/info-outline')['default']
     'IMaterialSymbols:infoRounded': typeof import('~icons/material-symbols/info-rounded')['default']
     'IMaterialSymbols:maleRounded': typeof import('~icons/material-symbols/male-rounded')['default']
+    'IMaterialSymbols:mapOutline': typeof import('~icons/material-symbols/map-outline')['default']
     'IMaterialSymbols:modeNight': typeof import('~icons/material-symbols/mode-night')['default']
     'IMaterialSymbols:refreshRounded': typeof import('~icons/material-symbols/refresh-rounded')['default']
     'IMaterialSymbols:settingsOutlineRounded': typeof import('~icons/material-symbols/settings-outline-rounded')['default']
@@ -92,6 +93,7 @@ declare module 'vue' {
     NRadioGroup: typeof import('naive-ui')['NRadioGroup']
     NSelect: typeof import('naive-ui')['NSelect']
     NSlider: typeof import('naive-ui')['NSlider']
+    NSpin: typeof import('naive-ui')['NSpin']
     NSwitch: typeof import('naive-ui')['NSwitch']
     NTabPane: typeof import('naive-ui')['NTabPane']
     NTabs: typeof import('naive-ui')['NTabs']
@@ -112,5 +114,6 @@ declare module 'vue' {
     SkillParse: typeof import('./../src/components/role/SkillParse.vue')['default']
     SkillSelect: typeof import('./../src/components/common/SkillSelect.vue')['default']
     TeachList: typeof import('./../src/components/role/TeachList.vue')['default']
+    WeeklyMonsterMap: typeof import('./../src/components/map/WeeklyMonsterMap.vue')['default']
   }
 }

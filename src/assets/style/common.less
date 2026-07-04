@@ -4,12 +4,15 @@
     align-items: center;
 }
 
-.scrollbar(@width:4px, @color: #888) {
+.scrollbar(@width: 5px, @color: var(--m-scrollbar-color, #888), @hover-color: var(--m-scrollbar-color-hover, @color)) {
+    scrollbar-width: thin;
+    scrollbar-color: @color transparent;
+
     &::-webkit-scrollbar {
         width: @width;
+        height: @width;
     }
 
-    
     &::-webkit-scrollbar-track,
     &::-webkit-scrollbar-track-piece {
         border-radius: @width;
@@ -19,6 +22,10 @@
     &::-webkit-scrollbar-thumb {
         background-color: @color;
         border-radius: @width;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: @hover-color;
     }
 
     &::-webkit-scrollbar-button,

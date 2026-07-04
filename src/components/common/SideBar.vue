@@ -50,6 +50,11 @@ const items = reactive([
         icon: () => h(resolveComponent("i-game-icons:fish-monster")),
     },
     {
+        label: () => h(RouterLink, { to: "/map" }, () => "地图"),
+        key: "map",
+        icon: () => h(resolveComponent("i-material-symbols:map-outline")),
+    },
+    {
         label: () => h(RouterLink, { to: "/role" }, () => "角色"),
         key: "role",
         icon: () => h(resolveComponent("i-bx:game")),

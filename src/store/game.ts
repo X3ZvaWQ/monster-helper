@@ -1,9 +1,50 @@
-import { getMonsterBooks, getMonsterSkills, MonsterSkillBook } from "@/services/game";
+import { effects as localMonsterEffects } from "@/assets/data/baizhan_effects";
+import { getMonsterBooks, getMonsterBosses, getMonsterEffects, getMonsterSkills, getWeeklyMonsterMap, MonsterBossRaw, MonsterSkillBook } from "@/services/game";
 import { distance } from "fastest-levenshtein";
 import { groupBy, keyBy } from "lodash";
 import { SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
 import { getCurrentVersion } from "@/utils/update";
 import { getJx3boxPost } from "@/services/jx3box";
+
+const remoteCacheDuration = 6 * 60 * 60 * 1000;
+const baizhanImageRoot = "https://img.jx3box.com/pve/baizhan/";
+const defaultMonsterBossAvatar = `${baizhanImageRoot}fbcdpanel02_51.png`;
+
+const isRemoteCacheFresh = (lastFetchAt: number, hasData: boolean) => {
+    return Boolean(lastFetchAt && hasData && lastFetchAt + remoteCacheDuration > Date.now());
+};
+
+const getNextWeeklyMapExpireAt = (now = new Date()) => {
+    const expireAt = new Date(now);
+    const daysUntilMonday = (8 - expireAt.getDay()) % 7;
+    expireAt.setDate(expireAt.getDate() + daysUntilMonday);
+    expireAt.setHours(6, 0, 0, 0);
+    if (expireAt.getTime() <= now.getTime()) {
+        expireAt.setDate(expireAt.getDate() + 7);
+    }
+    return expireAt.getTime();
+};
+
+const getBossAvatar = (boss: MonsterBossRaw) => {
+    const filename = boss.ImagePath?.match(/\\([^\\]*)\./)?.[1]?.toLowerCase();
+    if (!filename) return defaultMonsterBossAvatar;
+    return `${baizhanImageRoot}${filename}_${boss.ImageFrame}.png`;
+};
+
+const isWeeklyMapCacheUsable = (map: WeeklyMonsterMap | null) => {
+    return Boolean(map?.floors.length && map.floors.every((floor) => "effect" in floor));
+};
+
+const getEffectReward = (description: string, localEffect?: (typeof localMonsterEffects)[number]) => {
+    const rewardRegexp = localEffect && "rewardRegexp" in localEffect ? localEffect.rewardRegexp : null;
+    if (rewardRegexp) {
+        const matches = description.match(rewardRegexp);
+        if (matches?.[1]) {
+            return Number(matches[1]);
+        }
+    }
+    return localEffect?.reward || 0;
+};
 
 // 游戏设置，不同步，随时从线上拉的
 export const useGameStore = defineStore("game", {
@@ -13,6 +54,15 @@ export const useGameStore = defineStore("game", {
 
         lastFetchBossListAt: 0, // 上次加载boss列表的时间戳
         bossList: [],
+        lastFetchMonsterBossesAt: 0, // 上次加载地图boss字典的时间戳
+        monsterBosses: [] as MonsterBoss[],
+        monsterBossMap: {} as Record<number, MonsterBoss>,
+        lastFetchMonsterEffectsAt: 0, // 上次加载地图效果字典的时间戳
+        monsterEffects: [] as MonsterEffect[],
+        monsterEffectMap: {} as Record<number, MonsterEffect>,
+        lastFetchMonsterMapAt: 0, // 上次加载每周地图的时间戳
+        monsterMapCacheExpireAt: 0, // 每周一早上6点失效
+        monsterMap: null as WeeklyMonsterMap | null,
         books: [] as MonsterSkillBook[],
         bookMap: {} as Record<number, Record<number, MonsterSkillBook>>,
         skills: [] as MonsterSkill[],
@@ -21,11 +71,7 @@ export const useGameStore = defineStore("game", {
     actions: {
         async fetchBossList() {
             // 每6小时加载一次boss列表
-            if (
-                this.lastFetchBossListAt &&
-                this.lastFetchBossListAt + 6 * 60 * 60 * 1000 > Date.now() &&
-                this.bossList.length
-            ) {
+            if (isRemoteCacheFresh(this.lastFetchBossListAt, this.bossList.length > 0)) {
                 return; // 如果已经加载过了，就不再加载
             }
             const post = await getJx3boxPost(101669);
@@ -42,11 +88,83 @@ export const useGameStore = defineStore("game", {
                 this.lastFetchBossListAt = Date.now();
             } catch { }
         },
+        async fetchMonsterBosses(force = false) {
+            if (!force && isRemoteCacheFresh(this.lastFetchMonsterBossesAt, this.monsterBosses.length > 0)) {
+                return;
+            }
+            const res = await getMonsterBosses();
+            const bosses = (res.data || [])
+                .filter((boss) => boss.dwNpcID && boss.szName)
+                .map((boss) => ({
+                    id: boss.dwNpcID,
+                    name: boss.szName!,
+                    skills: boss.szSkill || [],
+                    avatar: getBossAvatar(boss),
+                    imagePath: boss.ImagePath,
+                    imageFrame: boss.ImageFrame,
+                }));
+            this.monsterBosses = bosses;
+            this.monsterBossMap = keyBy(bosses, "id");
+            this.lastFetchMonsterBossesAt = Date.now();
+        },
+        async fetchMonsterEffects(force = false) {
+            if (!force && isRemoteCacheFresh(this.lastFetchMonsterEffectsAt, this.monsterEffects.length > 0)) {
+                return;
+            }
+            const res = await getMonsterEffects();
+            const effects = (res.data || []).map((effect) => {
+                const localEffect = localMonsterEffects.find((item) => item.id === effect.nID);
+                return {
+                    id: effect.nID,
+                    icon: effect.dwIconID || localEffect?.icon || 18505,
+                    name: effect.szName || localEffect?.name || "未知效果",
+                    description: effect.szDescription || localEffect?.desc || "",
+                    reward: getEffectReward(effect.szDescription || "", localEffect),
+                    tags: localEffect?.tags || [],
+                    buffID: localEffect?.buffID,
+                    buffLevel: localEffect?.buffLevel,
+                };
+            });
+            this.monsterEffects = effects;
+            this.monsterEffectMap = keyBy(effects, "id");
+            this.lastFetchMonsterEffectsAt = Date.now();
+        },
+        async fetchWeeklyMonsterMap(force = false) {
+            if (
+                !force &&
+                isWeeklyMapCacheUsable(this.monsterMap) &&
+                this.monsterMapCacheExpireAt > Date.now()
+            ) {
+                return;
+            }
+            await this.fetchMonsterBosses(force);
+            await this.fetchMonsterEffects(force);
+            const res = await getWeeklyMonsterMap();
+            if (res.code !== 0 || !res.data) {
+                throw new Error(res.msg || "本周地图加载失败");
+            }
+            const floors = (res.data.data || []).map((floor, index) => ({
+                ...floor,
+                floor: index + 1,
+                boss: this.monsterBossMap[floor.dwBossID] || null,
+                effect: this.monsterEffectMap[floor.nEffectID] || null,
+            }));
+            this.monsterMap = {
+                id: res.data.id,
+                start: res.data.start,
+                updatedAt: res.data.updated_at,
+                enable: res.data.enable,
+                floors,
+                extra: res.data.extra,
+            };
+            this.lastFetchMonsterMapAt = Date.now();
+            this.monsterMapCacheExpireAt = getNextWeeklyMapExpireAt();
+        },
         async fetchSkills() {
             // 6小时以内加载过且skills长度不为0，并且软件版本号相同
             if (
                 this.lastUpdatedAt &&
-                this.lastUpdatedAt + 6 * 60 * 60 * 1000 > Date.now() &&
+                this.lastUpdatedAt + remoteCacheDuration > Date.now() &&
                 this.skills.length &&
                 this.lastUpdateVersion === (await getCurrentVersion())
             ) {
