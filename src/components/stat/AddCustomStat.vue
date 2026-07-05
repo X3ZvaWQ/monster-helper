@@ -21,7 +21,7 @@
                 <n-radio-group v-model:value="formData.valueType">
                     <n-radio-button value="boolean" label="是/否" />
                     <n-radio-button value="number" label="数字" />
-                    <n-radio-button value="text" label="文本" />
+                    <n-radio-button value="string" label="文本" />
                 </n-radio-group>
             </n-form-item>
             <n-form-item label="随CD重置">
@@ -30,7 +30,7 @@
             <n-form-item label="初始值">
                 <n-input-number v-if="formData.valueType === 'number'" v-model:value.number="formData.default" />
                 <n-checkbox v-else-if="formData.valueType === 'boolean'" v-model:checked="formData.default" />
-                <n-input v-else-if="formData.valueType === 'text'" v-model:value="formData.default" />
+                <n-input v-else-if="formData.valueType === 'string'" v-model:value="formData.default" />
             </n-form-item>
         </n-form>
     </n-modal>
@@ -64,6 +64,9 @@ const open = (payload?: any) => {
         ...defaultForm,
         ...(payload || {}),
     };
+    if (formData.value.valueType === "text") {
+        formData.value.valueType = "string";
+    }
     return new Promise((resolve, reject) => {
         callback.value = { resolve, reject };
     });
@@ -84,7 +87,7 @@ watch(
             formData.value.default = false;
         } else if (type === "number") {
             formData.value.default = 0;
-        } else if (type === "text") {
+        } else if (type === "string") {
             formData.value.default = "";
         }
     }

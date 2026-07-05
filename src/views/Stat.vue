@@ -151,6 +151,9 @@ const columns = computed(() => {
         }
         return style;
     };
+    const getEditableValueType = (valueType: CustomStatSetting["valueType"] | "text") => {
+        return valueType === "number" ? "number" : "string";
+    };
     if (useSettingStore().stat.enableDragSort) {
         result.push({
             width: 40,
@@ -186,7 +189,7 @@ const columns = computed(() => {
             fixed: "left",
             align: "center",
             className: "shrink-0",
-            render: (row) => filterDataIndexMap.value[row.id],
+            render: (_row, index) => index + 1,
         } as TableColumn<StatTableDataRow>);
     }
     for (const item of setting) {
@@ -459,7 +462,7 @@ const columns = computed(() => {
                             h(EditableValue, {
                                 style: getStyle(item),
                                 value,
-                                type: item.valueType,
+                                type: getEditableValueType(item.valueType),
                                 disabled: !useSettingStore().stat.enableEdit,
                                 hideIcon: true,
                                 "onUpdate:value": (newValue: any) => {
@@ -691,15 +694,6 @@ const filterData = computed(() => {
 
         return true;
     });
-});
-const filterDataIndexMap = computed(() => {
-    return filterData.value.reduce(
-        (result, row, index) => {
-            result[row.id] = index + 1;
-            return result;
-        },
-        {} as Record<string, number>
-    );
 });
 const writableFilterData = computed({
     get: () => filterData.value,
