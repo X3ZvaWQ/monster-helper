@@ -48,6 +48,7 @@ export const getMonsterSkills = async () => {
                 .map((raw) => {
                     const skill: MonsterSkill = {
                         id: raw.dwOutSkillID,
+                        inSkillId: raw.dwInSkillID,
                         icon: raw.Skill?.IconID || -1,
                         name: raw.szSkillName,
                         gender: sexMap[raw.nSex || 0] || null, // 技能性别

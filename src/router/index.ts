@@ -30,12 +30,7 @@ const routes: RouteRecordRaw[] = [
                     },
                 });
             } else {
-                next({
-                    name: "stat-boss",
-                    params: {
-                        roleId: roleStore.roles[0]?.id,
-                    },
-                });
+                next();
             }
         },
     },
@@ -43,6 +38,11 @@ const routes: RouteRecordRaw[] = [
         name: "map",
         path: "/map",
         component: () => import("@/views/Map.vue"),
+    },
+    {
+        name: "planning",
+        path: "/planning",
+        component: () => import("@/views/Planning.vue"),
     },
     {
         name: "role",

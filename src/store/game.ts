@@ -166,6 +166,7 @@ export const useGameStore = defineStore("game", {
                 this.lastUpdatedAt &&
                 this.lastUpdatedAt + remoteCacheDuration > Date.now() &&
                 this.skills.length &&
+                this.skills.every((skill) => "inSkillId" in skill) &&
                 this.lastUpdateVersion === (await getCurrentVersion())
             ) {
                 return; // 如果技能已经加载过了，就不再加载

@@ -7,6 +7,7 @@ interface Role {
     name: string;
     schoolId: SchoolIds | null;
     gender: Gender;
+    canTreat?: boolean;
     skills: RoleSkill[];
     inventory: SkillBook[];
     // 角色备注

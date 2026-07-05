@@ -17,7 +17,11 @@ import { getSchoolName, iconLink } from "@/utils/game";
 import { getSearchKey, matchSearch } from "@/utils/search";
 import { SelectOption } from "naive-ui";
 
-const value = defineModel<string>("value", {
+const props = defineProps<{
+    roleFilter?: (role: Role) => boolean;
+}>();
+
+const value = defineModel<string | string[]>("value", {
     required: true,
 });
 
@@ -25,6 +29,7 @@ const value = defineModel<string>("value", {
 const roleOptions = computed(() => {
     const roles = useRoleStore().roles;
     return roles
+        .filter((role) => props.roleFilter?.(role) ?? true)
         .map((role) => ({
             label: role.name,
             value: role.id,

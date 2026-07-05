@@ -42,9 +42,16 @@ export const useSettingStore = defineStore("setting", {
             hiddenCollectedSkill: true as boolean, // 隐藏已收集
             hiddenCollectedBoss: true as boolean, // 隐藏已收集
             hiddenAddon: false as boolean, // 隐藏附带的防御技能
+            dutyFloorLimit: null as number | null, // 只看指定层数之后本周上班的首领
         },
         map: {
             range: "last50" as "all" | "last50" | "last30",
+        },
+        planning: {
+            sortWeight: 0,
+            boostMissingNineWithTenBook: true,
+            requirements: [] as { skillId: number | null; level: number | null }[],
+            requiredRoleIds: [] as string[],
         },
     }),
 });

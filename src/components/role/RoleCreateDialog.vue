@@ -53,6 +53,14 @@
                     <n-radio-button value="male" label="成男/正太" />
                 </n-radio-group>
             </n-form-item>
+            <n-form-item label="可治疗">
+                <n-flex align="center" :size="8">
+                    <n-switch v-model:value="formData.canTreat" :disabled="!canCurrentSchoolTreat" />
+                    <n-text depth="3">
+                        {{ canCurrentSchoolTreat ? "该门派可切治疗心法" : "该门派暂无治疗心法" }}
+                    </n-text>
+                </n-flex>
+            </n-form-item>
 
             <n-form-item label="角色名称" path="name">
                 <n-input v-model:value="formData.name" placeholder="输入角色名" />
@@ -75,6 +83,7 @@ import { getSearchKey, matchSearch } from "@/utils/search";
 import type { FormInst, FormRules } from "naive-ui";
 import { defaultRole } from "@/assets/data/role";
 import { useRouter } from "vue-router";
+import { canSchoolTreat, normalizeCanTreat } from "@/utils/role";
 
 const router = useRouter();
 
@@ -119,6 +128,7 @@ const rules: FormRules = {
 const onConfirm = () => {
     form.value?.validate((errors) => {
         if (!errors) {
+            formData.value.canTreat = normalizeCanTreat(formData.value);
             if (!isEdit.value) {
                 const role = cloneDeep(formData.value);
                 role.id = nanoid();
@@ -129,7 +139,7 @@ const onConfirm = () => {
                 const role = useRoleStore().getRoleById(formData.value.id!)!;
                 Object.assign(
                     role,
-                    pick(formData.value, ["account", "server", "schoolId", "gender", "name", "remark"])
+                    pick(formData.value, ["account", "server", "schoolId", "gender", "canTreat", "name", "remark"])
                 );
             }
         }
@@ -142,10 +152,25 @@ const open = (role?: Role) => {
     } else {
         formData.value = cloneDeep(defaultRole);
     }
+    formData.value.canTreat = normalizeCanTreat(formData.value);
 };
 const isEdit = computed(() => {
     return !!formData.value.id;
 });
+const canCurrentSchoolTreat = computed(() => canSchoolTreat(formData.value.schoolId));
+
+watch(
+    () => formData.value.schoolId,
+    (schoolId, oldSchoolId) => {
+        if (!canSchoolTreat(schoolId)) {
+            formData.value.canTreat = false;
+            return;
+        }
+        if (formData.value.canTreat === undefined || !canSchoolTreat(oldSchoolId)) {
+            formData.value.canTreat = true;
+        }
+    }
+);
 
 const onImport = () => {
     visible.value = false;

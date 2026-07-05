@@ -4,6 +4,7 @@ export const defaultRole: Role = {
     name: "",
     schoolId: null,
     gender: "female",
+    canTreat: false,
     skills: [],
     inventory: [],
     remark: "",
