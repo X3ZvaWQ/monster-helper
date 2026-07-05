@@ -1,30 +1,62 @@
 <template>
     <div class="p-stat" ref="pageEl">
         <div class="m-toolbar">
-            <n-flex :wrap="false" :align="'center'">
-                <n-flex :wrap="false" :align="'center'" class="shrink-0" v-if="useSettingStore().stat.enableSelect">
-                    <n-switch v-model:value="useSettingStore().stat.hiddenSelected" :round="false"></n-switch>
-                    <n-text>隐藏未选择</n-text>
+            <n-flex :wrap="false" :align="'center'" justify="space-between" class="m-toolbar-inner">
+                <n-flex :wrap="false" :align="'center'" class="m-profile-select">
+                    <n-select
+                        v-model:value="activeStatProfileKey"
+                        :options="statProfileOptions"
+                        size="small"
+                        placeholder="选择统计方案"
+                    />
+                    <n-button quaternary circle size="small" @click="openProfileManage">
+                        <template #icon>
+                            <i-material-symbols:settings-rounded />
+                        </template>
+                    </n-button>
                 </n-flex>
                 <n-flex :wrap="false" :align="'center'" class="shrink-0">
-                    <n-switch v-model:value="useSettingStore().stat.enableSelect" :round="false"></n-switch>
-                    <n-text>选择模式</n-text>
+                    <n-popover trigger="click" placement="bottom-end">
+                        <template #trigger>
+                            <n-button>
+                                <template #icon>
+                                    <i-material-symbols:tune />
+                                </template>
+                                模式
+                            </n-button>
+                        </template>
+                        <n-flex vertical class="m-mode-popover">
+                            <n-flex justify="space-between" :align="'center'" :wrap="false">
+                                <n-text>选择模式</n-text>
+                                <n-switch v-model:value="useSettingStore().stat.enableSelect" :round="false" />
+                            </n-flex>
+                            <n-flex
+                                justify="space-between"
+                                :align="'center'"
+                                :wrap="false"
+                                v-if="useSettingStore().stat.enableSelect"
+                            >
+                                <n-text>隐藏未选择</n-text>
+                                <n-switch v-model:value="useSettingStore().stat.hiddenSelected" :round="false" />
+                            </n-flex>
+                            <n-flex justify="space-between" :align="'center'" :wrap="false">
+                                <n-text>拖拽排序</n-text>
+                                <n-switch v-model:value="useSettingStore().stat.enableDragSort" :round="false" />
+                            </n-flex>
+                            <n-flex justify="space-between" :align="'center'" :wrap="false">
+                                <n-text>编辑模式</n-text>
+                                <n-switch v-model:value="useSettingStore().stat.enableEdit" :round="false" />
+                            </n-flex>
+                        </n-flex>
+                    </n-popover>
+                    <n-button @click="openSetting" type="primary">表格配置</n-button>
+                    <n-popconfirm @positive-click="useRoleStore().resetCd()">
+                        <template #trigger>
+                            <n-button type="warning">新的一周</n-button>
+                        </template>
+                        该操作会重置所有角色的百战CD/传功/被传功计数/自定义的随CD刷新列，周一的时候点一点就好，不可撤销哦~
+                    </n-popconfirm>
                 </n-flex>
-                <n-flex :wrap="false" :align="'center'" class="shrink-0">
-                    <n-switch v-model:value="useSettingStore().stat.enableDragSort" :round="false"></n-switch>
-                    <n-text>拖拽排序</n-text>
-                </n-flex>
-                <n-flex :wrap="false" :align="'center'" class="shrink-0">
-                    <n-switch v-model:value="useSettingStore().stat.enableEdit" :round="false"></n-switch>
-                    <n-text>编辑模式</n-text>
-                </n-flex>
-                <n-button @click="openSetting" type="primary">表格配置</n-button>
-                <n-popconfirm @positive-click="useRoleStore().resetCd()">
-                    <template #trigger>
-                        <n-button type="warning">新的一周</n-button>
-                    </template>
-                    该操作会重置所有角色的百战CD/传功/被传功计数/自定义的随CD刷新列，周一的时候点一点就好，不可撤销哦~
-                </n-popconfirm>
             </n-flex>
         </div>
         <div class="m-data" ref="tableWrapperRef" :style="tableStyle">
@@ -64,6 +96,7 @@
         </div>
 
         <stat-setting ref="settingPanel"></stat-setting>
+        <stat-profile-manage-dialog ref="profileManageDialog"></stat-profile-manage-dialog>
         <role-detail-dialog ref="roleDetail"></role-detail-dialog>
     </div>
 </template>
@@ -71,6 +104,7 @@
 <script setup lang="ts">
 import RoleDetailDialog from "@/components/role/RoleDetailDialog.vue";
 import StatSetting from "@/components/stat/Setting.vue";
+import StatProfileManageDialog from "@/components/stat/StatProfileManageDialog.vue";
 import TeachList from "@/components/role/TeachList.vue";
 
 import { bossList, skillLevelLabel } from "@/assets/data/game";
@@ -79,7 +113,7 @@ import { useRoleStore } from "@/store/role";
 import { useSettingStore } from "@/store/setting";
 import { getSchoolName, iconLink } from "@/utils/game";
 import { sumBy } from "lodash";
-import { DataTableColumns } from "naive-ui";
+import { DataTableColumns, SelectOption } from "naive-ui";
 import { OnUpdateSorter, TableBaseColumn, TableColumn } from "naive-ui/es/data-table/src/interface";
 import { CSSProperties } from "vue";
 import { useResizeObserver } from "@vueuse/core";
@@ -87,6 +121,30 @@ import { VueDraggable } from "vue-draggable-plus";
 import { getSearchKey, matchSearch } from "@/utils/search";
 import EditableValue from "@/components/common/EditableValue.vue";
 import { getCustomCellKey, getCustomRoleValue, setCustomRoleValue } from "@/utils/stat-custom";
+
+const settingStore = useSettingStore();
+settingStore.ensureStatProfiles();
+
+const statProfileOptions = computed<SelectOption[]>(() =>
+    settingStore.statProfiles.map((profile) => ({
+        label: profile.name || "未命名方案",
+        value: profile.key,
+    }))
+);
+const activeStatProfileKey = computed({
+    get: () => settingStore.activeStatProfileKey,
+    set: (key: string) => {
+        settingStore.switchStatProfile(key);
+    },
+});
+
+watch(
+    () => settingStore.stat,
+    () => {
+        settingStore.saveActiveStatProfile();
+    },
+    { deep: true }
+);
 
 const filterPattern = ref<Record<string, string>>({
     account: "",
@@ -748,10 +806,20 @@ const initSorter = () => {
 onMounted(() => {
     initSorter();
 });
+watch(
+    () => settingStore.activeStatProfileKey,
+    () => {
+        nextTick(initSorter);
+    }
+);
 
 const settingPanel = ref<InstanceType<typeof StatSetting> | null>(null);
 const openSetting = () => {
     settingPanel.value?.open();
+};
+const profileManageDialog = ref<InstanceType<typeof StatProfileManageDialog> | null>(null);
+const openProfileManage = () => {
+    profileManageDialog.value?.open();
 };
 
 const tableWidth = computed(() => {
@@ -839,15 +907,33 @@ useResizeObserver(tableWrapperRef, (entries) => {
 
     .m-toolbar {
         display: flex;
-        justify-content: flex-end;
         position: sticky;
         top: 0;
         gap: 12px;
+
+        .m-toolbar-inner {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .m-profile-select {
+            width: 240px;
+            min-width: 180px;
+
+            .n-select {
+                flex: 1;
+                min-width: 0;
+            }
+        }
 
         .n-input {
             flex-grow: 1;
             width: 0px;
         }
+    }
+
+    .m-mode-popover {
+        width: 160px;
     }
 
     .n-data-table {

@@ -73,6 +73,34 @@ interface CustomStatSetting extends BaseStatSetting {
 type CustomStatValueType = "boolean" | "number" | "string";
 type CustomStatValue = boolean | number | string;
 
+interface StatProfileSetting {
+    enableEdit: boolean;
+    dragSortList: string[];
+    enableDragSort: boolean;
+    enableSelect: boolean;
+    enableIndex: boolean;
+    selectRoles: string[];
+    hiddenSelected: boolean;
+    columns: StatSetting[];
+    hiddenCustomColumns?: CustomStatSetting[];
+    deletedCustomColumns?: CustomStatSetting[];
+    style: {
+        color: string | null;
+        fontSize: number | null;
+        fontWeight: number | null;
+    };
+    background: { level: number | null; color: string }[];
+    sort: any[];
+    skillColumnWidth: number;
+}
+
+interface StatProfile {
+    key: string;
+    name: string;
+    isDefault?: boolean;
+    stat: StatProfileSetting;
+}
+
 type StatSetting =
     | BasicCdStatSetting
     | BasicTeachStatSetting
