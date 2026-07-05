@@ -16,6 +16,7 @@ export const useSettingStore = defineStore("setting", {
             dragSortList: [] as string[],
             enableDragSort: false as boolean,
             enableSelect: false as boolean,
+            enableIndex: false as boolean,
             selectRoles: [] as string[],
             hiddenSelected: false as boolean, // 隐藏选择项
             columns: cloneDeep(defaultStatColumns) as StatSetting[],
@@ -43,6 +44,7 @@ export const useSettingStore = defineStore("setting", {
             hiddenCollectedBoss: true as boolean, // 隐藏已收集
             hiddenAddon: false as boolean, // 隐藏附带的防御技能
             dutyFloorLimit: null as number | null, // 只看指定层数之后本周上班的首领
+            dutyRecordFloorLimit: 80 as number, // 0表示全部，只展示指定层数之后的值班记录
         },
         map: {
             range: "last50" as "all" | "last50" | "last30",

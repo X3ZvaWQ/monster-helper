@@ -125,6 +125,7 @@ const rules: FormRules = {
     schoolId: [{ required: true, type: "number", message: "请选择门派", trigger: "change" }],
     name: [{ required: true, message: "请输入角色名", trigger: "blur" }],
 };
+const formData = ref(cloneDeep(defaultRole));
 const onConfirm = () => {
     form.value?.validate((errors) => {
         if (!errors) {
@@ -181,8 +182,6 @@ const onImport = () => {
         },
     });
 };
-
-const formData = ref(cloneDeep(defaultRole));
 
 defineExpose({
     open,

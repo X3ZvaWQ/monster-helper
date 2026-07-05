@@ -52,7 +52,7 @@
 ## Vue / Naive UI 约定
 
 - 默认使用 Composition API 和 `<script setup lang="ts">`。
-- SFC 顺序按现有风格保持为 `<template>`、`<script setup>`、`<style scoped>`，不要为了格式洁癖大面积重排旧文件。
+- SFC 顺序按现有风格保持为 `<template>`、`<script setup>`、`<style scoped>`，不遵循最佳实践里的推荐。
 - 组件通信优先 props down / events up；只有弹窗 `open()` 这类现有命令式 API 才用 `defineExpose` + template ref。
 - 派生数据优先 `computed`，watch 只用于副作用，例如文件变化后触发 OCR、路由 query 触发弹窗。
 - Naive UI 组件通过 `unplugin-vue-components` 自动引入，`useMessage/useNotification/useDialog/useLoadingBar` 等通过 `unplugin-auto-import` 自动引入。读代码时不要把未显式 import 直接判成错误。

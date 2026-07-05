@@ -1,3 +1,47 @@
+<template>
+    <n-card size="small" class="m-team-result" :style="tableStyle">
+        <template #header>
+            <n-flex justify="space-between" align="center" :wrap="true">
+                <n-flex align="center">
+                    <n-tag type="primary" round>#{{ index + 1 }}</n-tag>
+                    <n-text strong>推荐队伍</n-text>
+                    <n-tag size="small" type="info">缺口 {{ result.needCount }} 个</n-tag>
+                    <n-tag size="small" type="success">覆盖 {{ result.uniqueBossCount }} 个首领</n-tag>
+                    <n-tag size="small" :type="result.conflicts.length ? 'warning' : 'success'">
+                        {{ result.conflicts.length ? `冲突 ${result.conflicts.length} 个` : "无冲突" }}
+                    </n-tag>
+                </n-flex>
+            </n-flex>
+        </template>
+
+        <div class="m-role-summary">
+            <div v-for="report in roleColumns" :key="report.role.id" class="m-role-chip">
+                <n-image :src="schoolIconLink(report.role.schoolId!)" :preview-disabled="true" class="u-school-icon" />
+                <div class="m-role-name">
+                    <n-text strong>{{ report.role.name }}</n-text>
+                    <n-text depth="3"
+                        >{{ report.slot === "healer" ? "治疗" : "输出" }} / {{ report.role.account }}</n-text
+                    >
+                </div>
+            </div>
+        </div>
+
+        <n-data-table
+            v-if="tableRows.length"
+            size="small"
+            :columns="columns"
+            :data="tableRows"
+            :pagination="false"
+            :bordered="true"
+            :single-line="false"
+            :max-height="360"
+            :scroll-x="tableScrollX"
+            :row-key="(row) => row.key"
+        />
+        <n-empty v-else description="这组队伍本周 81-100 暂无规划缺口" />
+    </n-card>
+</template>
+
 <script setup lang="ts">
 import { skillWeights } from "@/assets/data/game";
 import { formatPlannerLevel, TeamPlannerResult, TeamPlannerRoleNeed } from "@/services/teamPlanner";
@@ -144,7 +188,11 @@ const tableRows = computed<PlannerTableRow[]>(() => {
         .sort((a, b) => {
             const aMaxLevel = Math.max(...a.weeklyLevels);
             const bMaxLevel = Math.max(...b.weeklyLevels);
-            return bMaxLevel - aMaxLevel || Number(b.important) - Number(a.important) || a.skillName.localeCompare(b.skillName);
+            return (
+                bMaxLevel - aMaxLevel ||
+                Number(b.important) - Number(a.important) ||
+                a.skillName.localeCompare(b.skillName)
+            );
         });
 });
 
@@ -154,7 +202,9 @@ const getCellTooltip = (cell: PlannerTableCell) => {
         pieces.push(`背包后可到${formatPlannerLevel(cell.effectiveLevel)}`);
     }
     for (const need of cell.needs) {
-        pieces.push(`${need.floors.map((floor) => `${floor}层`).join("、")} ${need.bosses.join("、")} 可补${formatPlannerLevel(need.targetLevel)}`);
+        pieces.push(
+            `${need.floors.map((floor) => `${floor}层`).join("、")} ${need.bosses.join("、")} 可补${formatPlannerLevel(need.targetLevel)}`
+        );
         if (need.converted) {
             pieces.push(`${need.droppedSkillName}可转换`);
         }
@@ -269,48 +319,6 @@ const columns = computed<DataTableColumns<PlannerTableRow>>(() => [
 
 const tableScrollX = computed(() => 286 + roleColumns.value.length * 92);
 </script>
-
-<template>
-    <n-card size="small" class="m-team-result" :style="tableStyle">
-        <template #header>
-            <n-flex justify="space-between" align="center" :wrap="true">
-                <n-flex align="center">
-                    <n-tag type="primary" round>#{{ index + 1 }}</n-tag>
-                    <n-text strong>推荐队伍</n-text>
-                    <n-tag size="small" type="info">缺口 {{ result.needCount }} 个</n-tag>
-                    <n-tag size="small" type="success">覆盖 {{ result.uniqueBossCount }} 个首领</n-tag>
-                    <n-tag size="small" :type="result.conflicts.length ? 'warning' : 'success'">
-                        {{ result.conflicts.length ? `冲突 ${result.conflicts.length} 个` : "无冲突" }}
-                    </n-tag>
-                </n-flex>
-            </n-flex>
-        </template>
-
-        <div class="m-role-summary">
-            <div v-for="report in roleColumns" :key="report.role.id" class="m-role-chip">
-                <n-image :src="schoolIconLink(report.role.schoolId!)" :preview-disabled="true" class="u-school-icon" />
-                <div class="m-role-name">
-                    <n-text strong>{{ report.role.name }}</n-text>
-                    <n-text depth="3">{{ report.slot === "healer" ? "治疗" : "输出" }} / {{ report.role.account }}</n-text>
-                </div>
-            </div>
-        </div>
-
-        <n-data-table
-            v-if="tableRows.length"
-            size="small"
-            :columns="columns"
-            :data="tableRows"
-            :pagination="false"
-            :bordered="true"
-            :single-line="false"
-            :max-height="360"
-            :scroll-x="tableScrollX"
-            :row-key="(row) => row.key"
-        />
-        <n-empty v-else description="这组队伍本周 81-100 暂无规划缺口" />
-    </n-card>
-</template>
 
 <style scoped lang="less">
 .m-team-result {

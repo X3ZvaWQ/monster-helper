@@ -6,7 +6,7 @@
     >
         <template v-if="!disabled">
             <slot :value="value" v-if="!hideIcon">
-                <n-text>{{ value }}</n-text>
+                <n-text>{{ displayValue }}</n-text>
             </slot>
             <n-popover ref="popoverRef" trigger="click" @update:show="onShowChange">
                 <template #trigger>
@@ -16,7 +16,7 @@
                         </template>
                     </n-button>
                     <slot :value="value" v-if="hideIcon && value">
-                        <n-text>{{ value }}</n-text>
+                        <n-text>{{ displayValue }}</n-text>
                     </slot>
                 </template>
                 <n-input-group>
@@ -39,7 +39,7 @@
             </n-popover>
         </template>
         <slot :value="value" v-else>
-            <n-text>{{ value }}</n-text>
+            <n-text>{{ displayValue }}</n-text>
         </slot>
     </n-flex>
 </template>
@@ -51,6 +51,7 @@ import type { InputInst, NPopover } from "naive-ui";
 const props = withDefaults(
     defineProps<{
         value: any;
+        displayValue?: any;
         type?: "number" | "string";
         hideIcon?: boolean;
         disabled?: boolean;
@@ -68,6 +69,7 @@ const emits = defineEmits<{
     (e: "update:value", value: any): void;
 }>();
 const inputValue = ref<any>(null);
+const displayValue = computed(() => props.displayValue ?? props.value);
 
 watch(
     () => props.value,

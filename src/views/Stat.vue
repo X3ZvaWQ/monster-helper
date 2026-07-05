@@ -29,11 +29,11 @@
         </div>
         <div class="m-data" ref="tableWrapperRef" :style="tableStyle">
             <VueDraggable
+                v-if="useSettingStore().stat.enableDragSort"
                 v-model="writableFilterData"
                 :animation="150"
                 target=".n-data-table-tbody"
                 handle=".drag-handle"
-                :disabled="!useSettingStore().stat.enableDragSort"
             >
                 <n-data-table
                     ref="tableRef"
@@ -48,6 +48,19 @@
                     :on-update:sorter="onUpdateSorter"
                 />
             </VueDraggable>
+            <n-data-table
+                v-else
+                ref="tableRef"
+                :max-height="maxHeight"
+                :columns="columns"
+                :data="filterData"
+                :bordered="true"
+                :scroll-x="tableWidth"
+                :on-unstable-column-resize="onColumnResize"
+                :row-key="(row) => row.id"
+                v-model:checked-row-keys="useSettingStore().stat.selectRoles"
+                :on-update:sorter="onUpdateSorter"
+            />
         </div>
 
         <stat-setting ref="settingPanel"></stat-setting>
@@ -163,6 +176,17 @@ const columns = computed(() => {
             fixed: "left",
             align: "center",
             className: "shrink-0",
+        } as TableColumn<StatTableDataRow>);
+    }
+    if (useSettingStore().stat.enableIndex) {
+        result.push({
+            title: "#",
+            key: "__index",
+            width: 52,
+            fixed: "left",
+            align: "center",
+            className: "shrink-0",
+            render: (row) => filterDataIndexMap.value[row.id],
         } as TableColumn<StatTableDataRow>);
     }
     for (const item of setting) {
@@ -359,8 +383,7 @@ const columns = computed(() => {
                                     "onUpdate:value": (value: any) => {
                                         onUpdateRole(row.id, key, value);
                                     },
-                                },
-                                { default: () => row[key] }
+                                }
                             )
                         );
                     }
@@ -374,14 +397,14 @@ const columns = computed(() => {
                                 style: getStyle(item),
                                 class: `level-${skillLevel} u-skill-level`,
                                 value: skillLevel,
+                                displayValue: item.level === "levelLabel" ? skillLevelLabel[skillLevel] : skillLevel,
                                 disabled: !useSettingStore().stat.enableEdit,
                                 hideIcon: true,
                                 type: "number",
                                 "onUpdate:value": (value: any) => {
                                     onUpdateRole(row.id, ["skill", item.skillId], Number(value));
                                 },
-                            },
-                            { default: () => (item.level === "levelLabel" ? skillLevelLabel[skillLevel] : skillLevel) }
+                            }
                         )
                     );
                     if (row[`skill-book-${item.skillId}`] && row[`skill-book-${item.skillId}`].length > 0) {
@@ -622,15 +645,18 @@ const data = computed(() => {
     return result;
 });
 const filterData = computed(() => {
-    const searchBosses = bossList.value.filter((boss) => {
-        // 1. boss名称匹配
-        if (matchSearch(filterPattern.value.teach, boss.searchKey)) return true;
-        // 2. boss的技能名称匹配
-        const bossSkills = useGameStore().skills.filter((skill) => {
-            return skill.belongBoss?.includes(boss.skillAlias);
-        });
-        if (bossSkills.some((skill) => matchSearch(filterPattern.value.teach, skill.searchKey!))) return true;
-    });
+    const teachFilter = filterPattern.value.teach;
+    const searchBosses = teachFilter
+        ? bossList.value.filter((boss) => {
+              // 1. boss名称匹配
+              if (matchSearch(teachFilter, boss.searchKey)) return true;
+              // 2. boss的技能名称匹配
+              const bossSkills = useGameStore().skills.filter((skill) => {
+                  return skill.belongBoss?.includes(boss.skillAlias);
+              });
+              if (bossSkills.some((skill) => matchSearch(teachFilter, skill.searchKey!))) return true;
+          })
+        : [];
     const column = useSettingStore().stat.columns.find((item) => item.type === "basic" && item.key === "teach");
     const teachMinLevel = column?.minLevel || 7;
     return data.value.filter((row: StatTableDataRow) => {
@@ -665,6 +691,15 @@ const filterData = computed(() => {
 
         return true;
     });
+});
+const filterDataIndexMap = computed(() => {
+    return filterData.value.reduce(
+        (result, row, index) => {
+            result[row.id] = index + 1;
+            return result;
+        },
+        {} as Record<string, number>
+    );
 });
 const writableFilterData = computed({
     get: () => filterData.value,
@@ -722,7 +757,11 @@ const openSetting = () => {
 
 const tableWidth = computed(() => {
     const setting = useSettingStore().stat.columns;
-    return sumBy(setting, (item) => item.width || 100);
+    let width = sumBy(setting, (item) => item.width || 100);
+    if (useSettingStore().stat.enableDragSort) width += 40;
+    if (useSettingStore().stat.enableSelect) width += 40;
+    if (useSettingStore().stat.enableIndex) width += 52;
+    return width;
 });
 
 const roleDetail = ref<InstanceType<typeof RoleDetailDialog> | null>(null);

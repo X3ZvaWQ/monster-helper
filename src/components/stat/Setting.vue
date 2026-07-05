@@ -269,6 +269,12 @@
                     </n-dynamic-input>
                     <n-h6 prefix="bar">表格样式</n-h6>
                     <n-flex justify="space-between" :align="'center'">
+                        <div class="u-item-label">显示序号列</div>
+                        <div class="u-item-value grow">
+                            <n-switch v-model:value="useSettingStore().stat.enableIndex" size="small" />
+                        </div>
+                    </n-flex>
+                    <n-flex justify="space-between" :align="'center'">
                         <div class="u-item-label">技能列宽度</div>
                         <div class="u-item-value grow">
                             <n-input-number

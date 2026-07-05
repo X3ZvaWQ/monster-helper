@@ -1,3 +1,9 @@
+<template>
+    <div class="p-planning">
+        <team-planner-panel :map="gameStore.monsterMap" :loading="loading" @refresh="loadData(true)" />
+    </div>
+</template>
+
 <script setup lang="ts">
 import TeamPlannerPanel from "@/components/planning/TeamPlannerPanel.vue";
 import { useGameStore } from "@/store/game";
@@ -27,12 +33,6 @@ onMounted(() => {
     loadData();
 });
 </script>
-
-<template>
-    <div class="p-planning">
-        <team-planner-panel :map="gameStore.monsterMap" :loading="loading" @refresh="loadData(true)" />
-    </div>
-</template>
 
 <style lang="less" scoped>
 .p-planning {

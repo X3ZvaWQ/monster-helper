@@ -1,3 +1,111 @@
+<template>
+    <div class="m-team-planner">
+        <n-card size="small" class="m-planner-setting">
+            <n-flex justify="space-between" align="center" :wrap="true">
+                <n-flex align="center" :wrap="true">
+                    <n-text strong>组队规划</n-text>
+                    <n-text depth="3">地图更新于 {{ mapUpdatedAt }}</n-text>
+                    <n-text depth="3">未打角色 {{ availableRoleCount }} 个</n-text>
+                    <n-text depth="3">治疗候选 {{ healerRoleCount }} 个</n-text>
+                </n-flex>
+                <n-button type="primary" :loading="loading" @click="emit('refresh')">
+                    <template #icon>
+                        <i-material-symbols:refresh-rounded />
+                    </template>
+                    刷新地图
+                </n-button>
+            </n-flex>
+
+            <n-divider />
+
+            <n-flex class="m-planner-controls" align="center" :wrap="true">
+                <n-flex align="center" :wrap="false" class="m-sort-weight">
+                    <n-text depth="3" class="u-sort-label">冲突优先</n-text>
+                    <n-slider
+                        v-model:value="sortWeightDraft"
+                        :min="0"
+                        :max="100"
+                        :step="5"
+                        @dragend="commitSortWeight"
+                        @mouseup="commitSortWeight"
+                        @touchend="commitSortWeight"
+                    />
+                    <n-text depth="3" class="u-sort-label">收益优先</n-text>
+                </n-flex>
+                <n-flex align="center" :wrap="false">
+                    <n-switch v-model:value="settingStore.planning.boostMissingNineWithTenBook" size="small" />
+                    <n-text depth="3">有十缺九提高权重</n-text>
+                </n-flex>
+            </n-flex>
+
+            <n-collapse class="m-requirements">
+                <n-collapse-item title="队伍硬性限制" name="requirements">
+                    <n-dynamic-input v-model:value="settingStore.planning.requirements" :on-create="createRequirement">
+                        <template #default="{ value }">
+                            <n-flex align="center" :wrap="false" class="m-requirement-row">
+                                <skill-select
+                                    v-model:value="value.skillId"
+                                    :multiple="false"
+                                    placeholder="选择必须拥有的技能"
+                                    class="u-requirement-skill"
+                                />
+                                <n-select
+                                    v-model:value="value.level"
+                                    :options="levelOptions"
+                                    class="u-requirement-level"
+                                />
+                            </n-flex>
+                        </template>
+                    </n-dynamic-input>
+                    <n-flex vertical class="m-required-roles">
+                        <n-text depth="3">必须上场角色</n-text>
+                        <role-select
+                            v-model:value="requiredRoleIdsModel"
+                            multiple
+                            clearable
+                            :max-tag-count="2"
+                            placeholder="选择 1-2 个必须上场的角色"
+                            :role-filter="isRequiredRoleSelectable"
+                            class="u-required-role"
+                        />
+                    </n-flex>
+                    <n-text depth="3">当前限制：技能 {{ requirementText }}；角色 {{ requiredRoleText }}</n-text>
+                </n-collapse-item>
+            </n-collapse>
+        </n-card>
+
+        <n-spin :show="isBusy" class="m-result-spin">
+            <template #description>
+                {{ plannerWorker.calculating.value ? "正在计算推荐" : "正在加载数据" }}
+            </template>
+            <n-empty v-if="!map" description="还没有本周地图数据，点击刷新地图加载" />
+            <n-alert v-else-if="plannerWorker.error.value" type="error">
+                {{ plannerWorker.error.value }}
+            </n-alert>
+            <n-empty
+                v-else-if="!plannerWorker.results.value.length && !plannerWorker.calculating.value"
+                description="没有符合条件的队伍，请检查未打角色、治疗候选和硬性限制"
+            />
+            <div v-else class="m-team-list">
+                <team-planner-result-table
+                    v-for="(result, index) in pagedResults"
+                    :key="result.id"
+                    :result="result"
+                    :index="(resultPage - 1) * resultPageSize + index"
+                />
+                <n-pagination
+                    v-if="plannerWorker.results.value.length > resultPageSize"
+                    v-model:page="resultPage"
+                    :page-size="resultPageSize"
+                    :item-count="plannerWorker.results.value.length"
+                    size="small"
+                    class="m-result-pagination"
+                />
+            </div>
+        </n-spin>
+    </div>
+</template>
+
 <script setup lang="ts">
 import SkillSelect from "@/components/common/SkillSelect.vue";
 import RoleSelect from "@/components/common/RoleSelect.vue";
@@ -94,9 +202,7 @@ const isRequiredRoleSelectable = (role: Role) => {
 };
 
 const availableRoleCount = computed(() => roleStore.roles.filter((role) => !role.cd).length);
-const healerRoleCount = computed(() =>
-    roleStore.roles.filter((role) => !role.cd && normalizeCanTreat(role)).length
-);
+const healerRoleCount = computed(() => roleStore.roles.filter((role) => !role.cd && normalizeCanTreat(role)).length);
 const pagedResults = computed(() => {
     const start = (resultPage.value - 1) * resultPageSize;
     return plannerWorker.results.value.slice(start, start + resultPageSize);
@@ -118,14 +224,15 @@ const requirementText = computed(() => {
     );
     if (!requirements.length) return "无";
     return requirements
-        .map((item) => `${gameStore.getSkillById(item.skillId!)?.name || "未知技能"} ≥ ${formatPlannerLevel(item.level!)}`)
+        .map(
+            (item) =>
+                `${gameStore.getSkillById(item.skillId!)?.name || "未知技能"} ≥ ${formatPlannerLevel(item.level!)}`
+        )
         .join("、");
 });
 const requiredRoleText = computed(() => {
     if (!requiredRoleIdsModel.value.length) return "无";
-    return requiredRoleIdsModel.value
-        .map((roleId) => roleStore.getRoleById(roleId)?.name || "未知角色")
-        .join("、");
+    return requiredRoleIdsModel.value.map((roleId) => roleStore.getRoleById(roleId)?.name || "未知角色").join("、");
 });
 
 const isPlannerReady = computed(() => Boolean(props.map && Object.keys(gameStore.skillMap).length));
@@ -181,117 +288,6 @@ watch(
     }
 );
 </script>
-
-<template>
-    <div class="m-team-planner">
-        <n-card size="small" class="m-planner-setting">
-            <n-flex justify="space-between" align="center" :wrap="true">
-                <n-flex align="center" :wrap="true">
-                    <n-text strong>组队规划</n-text>
-                    <n-text depth="3">地图更新于 {{ mapUpdatedAt }}</n-text>
-                    <n-text depth="3">未打角色 {{ availableRoleCount }} 个</n-text>
-                    <n-text depth="3">治疗候选 {{ healerRoleCount }} 个</n-text>
-                </n-flex>
-                <n-button type="primary" :loading="loading" @click="emit('refresh')">
-                    <template #icon>
-                        <i-material-symbols:refresh-rounded />
-                    </template>
-                    刷新地图
-                </n-button>
-            </n-flex>
-
-            <n-divider />
-
-            <n-flex class="m-planner-controls" align="center" :wrap="true">
-                <n-flex align="center" :wrap="false" class="m-sort-weight">
-                    <n-text depth="3" class="u-sort-label">冲突优先</n-text>
-                    <n-slider
-                        v-model:value="sortWeightDraft"
-                        :min="0"
-                        :max="100"
-                        :step="5"
-                        @dragend="commitSortWeight"
-                        @mouseup="commitSortWeight"
-                        @touchend="commitSortWeight"
-                    />
-                    <n-text depth="3" class="u-sort-label">收益优先</n-text>
-                </n-flex>
-                <n-flex align="center" :wrap="false">
-                    <n-switch v-model:value="settingStore.planning.boostMissingNineWithTenBook" size="small" />
-                    <n-text depth="3">有十缺九提高权重</n-text>
-                </n-flex>
-            </n-flex>
-
-            <n-collapse class="m-requirements">
-                <n-collapse-item title="队伍硬性限制" name="requirements">
-                    <n-dynamic-input
-                        v-model:value="settingStore.planning.requirements"
-                        :on-create="createRequirement"
-                    >
-                        <template #default="{ value }">
-                            <n-flex align="center" :wrap="false" class="m-requirement-row">
-                                <skill-select
-                                    v-model:value="value.skillId"
-                                    :multiple="false"
-                                    placeholder="选择必须拥有的技能"
-                                    class="u-requirement-skill"
-                                />
-                                <n-select
-                                    v-model:value="value.level"
-                                    :options="levelOptions"
-                                    class="u-requirement-level"
-                                />
-                            </n-flex>
-                        </template>
-                    </n-dynamic-input>
-                    <n-flex vertical class="m-required-roles">
-                        <n-text depth="3">必须上场角色</n-text>
-                        <role-select
-                            v-model:value="requiredRoleIdsModel"
-                            multiple
-                            clearable
-                            :max-tag-count="2"
-                            placeholder="选择 1-2 个必须上场的角色"
-                            :role-filter="isRequiredRoleSelectable"
-                            class="u-required-role"
-                        />
-                    </n-flex>
-                    <n-text depth="3">当前限制：技能 {{ requirementText }}；角色 {{ requiredRoleText }}</n-text>
-                </n-collapse-item>
-            </n-collapse>
-        </n-card>
-
-        <n-spin :show="isBusy" class="m-result-spin">
-            <template #description>
-                {{ plannerWorker.calculating.value ? "正在计算推荐" : "正在加载数据" }}
-            </template>
-            <n-empty v-if="!map" description="还没有本周地图数据，点击刷新地图加载" />
-            <n-alert v-else-if="plannerWorker.error.value" type="error">
-                {{ plannerWorker.error.value }}
-            </n-alert>
-            <n-empty
-                v-else-if="!plannerWorker.results.value.length && !plannerWorker.calculating.value"
-                description="没有符合条件的队伍，请检查未打角色、治疗候选和硬性限制"
-            />
-            <div v-else class="m-team-list">
-                <team-planner-result-table
-                    v-for="(result, index) in pagedResults"
-                    :key="result.id"
-                    :result="result"
-                    :index="(resultPage - 1) * resultPageSize + index"
-                />
-                <n-pagination
-                    v-if="plannerWorker.results.value.length > resultPageSize"
-                    v-model:page="resultPage"
-                    :page-size="resultPageSize"
-                    :item-count="plannerWorker.results.value.length"
-                    size="small"
-                    class="m-result-pagination"
-                />
-            </div>
-        </n-spin>
-    </div>
-</template>
 
 <style lang="less" scoped>
 .m-team-planner {
@@ -359,6 +355,5 @@ watch(
     .m-result-pagination {
         justify-content: center;
     }
-
 }
 </style>
