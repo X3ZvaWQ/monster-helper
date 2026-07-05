@@ -5,14 +5,16 @@
                 <n-tab-pane name="column" tab="表格列配置">
                     <n-h6 prefix="bar" class="flex justify-between items-center">
                         <span>基本信息</span>
-                        <n-button @click="onAddCustomStat()" size="tiny">
-                            <template #icon>
-                                <n-icon>
-                                    <i-ic:baseline-add />
-                                </n-icon>
-                            </template>
-                            自定义属性
-                        </n-button>
+                        <n-space size="small">
+                            <n-button @click="onAddCustomStat()" size="tiny">
+                                <template #icon>
+                                    <n-icon>
+                                        <i-ic:baseline-add />
+                                    </n-icon>
+                                </template>
+                                自定义列
+                            </n-button>
+                        </n-space>
                     </n-h6>
                     <n-flex>
                         <n-button
@@ -26,7 +28,10 @@
                     </n-flex>
                     <n-h6 prefix="bar"> 技能等级 </n-h6>
                     <skill-select v-model:value="skillLevelSelects"></skill-select>
-                    <n-h6 prefix="bar"> 已选择项目 </n-h6>
+                    <n-h6 prefix="bar" class="flex justify-between items-center">
+                        <span>已选择项目</span>
+                        <n-button @click="onManageCustomColumn()" size="tiny"> 管理自定义列 </n-button>
+                    </n-h6>
                     <vue-draggable
                         class="m-stat-setting-list"
                         v-model="useSettingStore().stat.columns"
@@ -186,7 +191,7 @@
                                 <template #trigger>
                                     <n-button text type="warning"><i-material-symbols:delete-rounded /></n-button>
                                 </template>
-                                自定义列删除操作不可逆，你会丢失该列所有的记录！请确认操作
+                                删除后可在“管理自定义列”中恢复；彻底删除才会清除记录。
                             </n-popconfirm>
                         </div>
                     </vue-draggable>
@@ -289,6 +294,7 @@
         </n-drawer-content>
     </n-drawer>
     <add-custom-stat ref="addCustomStatRef"></add-custom-stat>
+    <custom-column-manage-dialog ref="customColumnManageRef"></custom-column-manage-dialog>
 </template>
 
 <script setup lang="ts">
@@ -299,7 +305,10 @@ import { VueDraggable } from "vue-draggable-plus";
 import { iconLink } from "@/utils/game";
 import type { CSSProperties } from "vue";
 import AddCustomStat from "./AddCustomStat.vue";
+import CustomColumnManageDialog from "./CustomColumnManageDialog.vue";
 import { nanoid } from "nanoid";
+import { useRoleStore } from "@/store/role";
+import { migrateCustomColumnValues, normalizeCustomColumn, softDeleteCustomColumn } from "@/utils/stat-custom";
 
 // 基础信息选择项
 const basicSelects = ref([
@@ -359,24 +368,33 @@ const addCustomStatRef = ref<InstanceType<typeof AddCustomStat>>();
 const onAddCustomStat = (column?: CustomStatSetting) => {
     addCustomStatRef.value
         ?.open(column)
-        .then((value: any) => {
+        .then((value) => {
+            const normalizedValue = normalizeCustomColumn(value);
             if (value.key) {
                 const currentColumn = useSettingStore().stat.columns.find(
                     (column) => column.type === "custom" && column.key === value.key
-                );
+                ) as CustomStatSetting | undefined;
                 if (currentColumn) {
-                    Object.assign(currentColumn, value);
+                    const previousValueType = currentColumn.valueType;
+                    Object.assign(currentColumn, normalizedValue);
+                    if (previousValueType !== currentColumn.valueType) {
+                        migrateCustomColumnValues(useRoleStore().roles, currentColumn);
+                    }
                 }
             } else {
                 const key = nanoid();
                 useSettingStore().stat.columns.unshift({
-                    ...value,
+                    ...normalizedValue,
                     type: "custom",
                     key,
                 });
             }
         })
         .catch(() => {});
+};
+const customColumnManageRef = ref<InstanceType<typeof CustomColumnManageDialog>>();
+const onManageCustomColumn = () => {
+    customColumnManageRef.value?.open();
 };
 
 // 更新技能等级列
@@ -429,9 +447,7 @@ const removeColumn = (column: StatSetting) => {
             (c) => !(c.type === "skill" && c.skillId === column.skillId)
         );
     } else if (column.type === "custom") {
-        useSettingStore().stat.columns = useSettingStore().stat.columns.filter(
-            (c) => !(c.type === "custom" && c.label === column.label)
-        );
+        softDeleteCustomColumn(useSettingStore().stat, column);
     }
 };
 

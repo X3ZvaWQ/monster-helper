@@ -1,15 +1,26 @@
 interface BaseStatSetting {
-    type: "basic" | "skill";
+    type: "basic" | "skill" | "custom";
     width?: number;
     fixed?: "left" | "right";
     style?: {
         color?: string;
-        fontSize?: string;
-        fontWeight?: string;
+        fontSize?: number;
+        fontWeight?: number;
     };
 }
 
-type BasicKey = "account" | "server" | "school" | "gender" | "spirit" | "endurance" | "role";
+type BasicKey =
+    | "account"
+    | "server"
+    | "school"
+    | "gender"
+    | "spirit"
+    | "endurance"
+    | "role"
+    | "teach"
+    | "cd"
+    | "cdRemark"
+    | "remark";
 
 interface BasicRoleStatSetting extends BaseStatSetting {
     type: "basic";
@@ -55,9 +66,12 @@ interface CustomStatSetting extends BaseStatSetting {
     key: string;
     label: string;
     refresh: boolean;
-    valueType: "boolean" | "number" | "string";
-    default: any;
+    valueType: CustomStatValueType;
+    default: CustomStatValue;
 }
+
+type CustomStatValueType = "boolean" | "number" | "string";
+type CustomStatValue = boolean | number | string;
 
 type StatSetting =
     | BasicCdStatSetting

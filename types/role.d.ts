@@ -22,8 +22,8 @@ interface Role {
     order?: number;
     // 表格排序
     tableOrder?: number;
-    // 自定义属性
-    customValue?: Record<string, boolean | number | string>;
+    // 自定义列
+    customValue?: Record<string, CustomStatValue>;
 }
 
 interface RoleSkill {

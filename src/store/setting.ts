@@ -20,6 +20,8 @@ export const useSettingStore = defineStore("setting", {
             selectRoles: [] as string[],
             hiddenSelected: false as boolean, // 隐藏选择项
             columns: cloneDeep(defaultStatColumns) as StatSetting[],
+            hiddenCustomColumns: [] as CustomStatSetting[],
+            deletedCustomColumns: [] as CustomStatSetting[],
             style: {
                 color: null as string | null,
                 fontSize: null as number | null,

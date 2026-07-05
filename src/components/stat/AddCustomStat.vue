@@ -1,7 +1,7 @@
 <template>
     <n-modal
         v-model:show="visible"
-        :title="formData.key ? '编辑自定义统计列' : '新增自定义统计列'"
+        :title="formData.key ? '编辑自定义列' : '新增自定义列'"
         preset="dialog"
         positive-text="确定"
         negative-text="取消"
@@ -28,9 +28,9 @@
                 <n-switch v-model:value="formData.refresh" />
             </n-form-item>
             <n-form-item label="初始值">
-                <n-input-number v-if="formData.valueType === 'number'" v-model:value.number="formData.default" />
-                <n-checkbox v-else-if="formData.valueType === 'boolean'" v-model:checked="formData.default" />
-                <n-input v-else-if="formData.valueType === 'string'" v-model:value="formData.default" />
+                <n-input-number v-if="formData.valueType === 'number'" v-model:value.number="numberDefault" />
+                <n-checkbox v-else-if="formData.valueType === 'boolean'" v-model:checked="booleanDefault" />
+                <n-input v-else-if="formData.valueType === 'string'" v-model:value="stringDefault" />
             </n-form-item>
         </n-form>
     </n-modal>
@@ -38,7 +38,16 @@
 
 <script setup lang="ts">
 import { useMessage } from "naive-ui";
+import { normalizeCustomValue, normalizeCustomValueType } from "@/utils/stat-custom";
 const message = useMessage();
+
+interface CustomStatForm {
+    key: string | null;
+    label: string;
+    valueType: CustomStatValueType | "text";
+    refresh: boolean;
+    default: CustomStatValue;
+}
 
 const visible = ref(false);
 
@@ -47,7 +56,12 @@ const onConfirm = () => {
         message.error("请输入列名");
         return false;
     }
-    callback.value?.resolve(formData.value);
+    const valueType = normalizeCustomValueType(formData.value.valueType);
+    callback.value?.resolve({
+        ...formData.value,
+        valueType,
+        default: normalizeCustomValue(formData.value.default, valueType),
+    });
     visible.value = false;
 };
 const onCancel = () => {
@@ -55,11 +69,12 @@ const onCancel = () => {
 };
 
 const callback = ref<{
-    resolve: (value: any) => void;
+    resolve: (value: CustomStatForm) => void;
     reject: (reason?: any) => void;
 } | null>(null);
-const open = (payload?: any) => {
+const open = (payload?: Partial<CustomStatForm>) => {
     visible.value = true;
+    suppressDefaultReset.value = true;
     formData.value = {
         ...defaultForm,
         ...(payload || {}),
@@ -67,22 +82,45 @@ const open = (payload?: any) => {
     if (formData.value.valueType === "text") {
         formData.value.valueType = "string";
     }
-    return new Promise((resolve, reject) => {
+    nextTick(() => {
+        suppressDefaultReset.value = false;
+    });
+    return new Promise<CustomStatForm>((resolve, reject) => {
         callback.value = { resolve, reject };
     });
 };
 
-const defaultForm = {
+const defaultForm: CustomStatForm = {
     key: null,
     label: "",
     valueType: "boolean",
     refresh: false,
-    default: null as any,
+    default: false,
 };
 const formData = ref({ ...defaultForm });
+const suppressDefaultReset = ref(false);
+const numberDefault = computed({
+    get: () => (typeof formData.value.default === "number" ? formData.value.default : 0),
+    set: (value: number | null) => {
+        formData.value.default = value ?? 0;
+    },
+});
+const booleanDefault = computed({
+    get: () => Boolean(formData.value.default),
+    set: (value: boolean) => {
+        formData.value.default = value;
+    },
+});
+const stringDefault = computed({
+    get: () => String(formData.value.default ?? ""),
+    set: (value: string) => {
+        formData.value.default = value;
+    },
+});
 watch(
     () => formData.value.valueType,
     (type) => {
+        if (suppressDefaultReset.value) return;
         if (type === "boolean") {
             formData.value.default = false;
         } else if (type === "number") {

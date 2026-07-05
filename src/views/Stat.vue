@@ -86,6 +86,7 @@ import { useResizeObserver } from "@vueuse/core";
 import { VueDraggable } from "vue-draggable-plus";
 import { getSearchKey, matchSearch } from "@/utils/search";
 import EditableValue from "@/components/common/EditableValue.vue";
+import { getCustomCellKey, getCustomRoleValue, setCustomRoleValue } from "@/utils/stat-custom";
 
 const filterPattern = ref<Record<string, string>>({
     account: "",
@@ -104,7 +105,7 @@ const onColumnResize = (newWidth: number, _: number, column: TableBaseColumn) =>
         (item) =>
             (item.type === "basic" && item.key === column.key) ||
             (item.type === "skill" && `skill-${item.skillId}` === column.key) ||
-            (item.type === "custom" && `custom-${item.key}` === column.key)
+            (item.type === "custom" && getCustomCellKey(item) === column.key)
     );
     settingColumn!.width = newWidth;
 };
@@ -115,7 +116,7 @@ const columns = computed(() => {
     const getColumnKey = (item: StatSetting): keyof StatTableDataRow => {
         if (item.type === "basic") return item.key;
         if (item.type === "skill") return `skill-${item.skillId}`;
-        if (item.type === "custom") return `custom-${item.key}`;
+        if (item.type === "custom") return getCustomCellKey(item);
         return "default";
     };
     const getColumnLabel = (item: StatSetting) => {
@@ -151,7 +152,7 @@ const columns = computed(() => {
         }
         return style;
     };
-    const getEditableValueType = (valueType: CustomStatSetting["valueType"] | "text") => {
+    const getEditableValueType = (valueType: CustomStatSetting["valueType"]) => {
         return valueType === "number" ? "number" : "string";
     };
     if (useSettingStore().stat.enableDragSort) {
@@ -433,7 +434,7 @@ const columns = computed(() => {
                         );
                     }
                 } else if (item.type === "custom") {
-                    const value = row[`custom-${item.key}`];
+                    const value = row[getCustomCellKey(item)];
                     if (item.valueType === "boolean") {
                         if (useSettingStore().stat.enableEdit) {
                             divContent.push(
@@ -551,8 +552,12 @@ const onUpdateRole = (id: string, key: string | [string, any], value: any) => {
             }
         } else if (scope === "custom") {
             const role = useRoleStore().getRoleById(id)!;
-            if (!role.customValue) role.customValue = {};
-            role.customValue[scopeId] = value;
+            const column = useSettingStore().stat.columns.find(
+                (item) => item.type === "custom" && item.key === scopeId
+            ) as CustomStatSetting | undefined;
+            if (column) {
+                setCustomRoleValue(role, column, value);
+            }
         }
     } else {
         useRoleStore().updateRole(id, {
@@ -639,7 +644,7 @@ const data = computed(() => {
                     }
                 }
             } else if (column.type === "custom") {
-                row[`custom-${column.key}`] = role.customValue?.[column.key];
+                row[getCustomCellKey(column)] = getCustomRoleValue(role, column);
             }
         }
 
