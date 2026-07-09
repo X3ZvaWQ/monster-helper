@@ -219,6 +219,9 @@ const getCellTooltip = (cell: PlannerTableCell) => {
         if (need.converted) {
             pieces.push(`${need.droppedSkillName}可转换`);
         }
+        if (need.isExtraDrop) {
+            pieces.push(`由${need.bosses.join("、")}额外掉落${need.sourceBosses.join("、")}技能`);
+        }
         if (need.hasHigherBookBlocked) {
             pieces.push("背包已有十重书，建议先补九重");
         }

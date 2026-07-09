@@ -43,6 +43,8 @@ export interface TeamPlannerRoleNeed {
     hasHigherBookBlocked: boolean;
     floors: number[];
     bosses: string[];
+    sourceBosses: string[];
+    isExtraDrop: boolean;
 }
 
 export interface TeamPlannerRoleReport {
@@ -270,6 +272,10 @@ export const getRolePlanningNeeds = (
             if (existing) {
                 if (!existing.floors.includes(floor.floor)) existing.floors.push(floor.floor);
                 if (!existing.bosses.includes(boss.name)) existing.bosses.push(boss.name);
+                if (!existing.sourceBosses.includes(dropEntry.sourceBossName)) {
+                    existing.sourceBosses.push(dropEntry.sourceBossName);
+                }
+                existing.isExtraDrop ||= dropEntry.isExtraDrop;
                 continue;
             }
             needMap.set(key, {
@@ -287,6 +293,8 @@ export const getRolePlanningNeeds = (
                 hasHigherBookBlocked,
                 floors: [floor.floor],
                 bosses: [boss.name],
+                sourceBosses: [dropEntry.sourceBossName],
+                isExtraDrop: dropEntry.isExtraDrop,
             });
         }
     }
