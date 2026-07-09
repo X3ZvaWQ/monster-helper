@@ -82,6 +82,7 @@ interface PlannerTableRow {
     key: number;
     skillId: number;
     skillName: string;
+    starred: boolean;
     important: boolean;
     weeklyLevels: number[];
     cells: Record<string, PlannerTableCell>;
@@ -110,6 +111,7 @@ const tableStyle = computed<CSSProperties>(() => {
 });
 
 const roleColumns = computed(() => props.result.roleReports);
+const starSkillIdSet = computed(() => new Set(props.starSkillIds || []));
 
 const getCellKey = (need: TeamPlannerRoleNeed) => `${need.skillId}-${need.targetLevel}`;
 
@@ -193,6 +195,7 @@ const tableRows = computed<PlannerTableRow[]>(() => {
                 key: row.skillId,
                 skillId: row.skillId,
                 skillName: row.skillName,
+                starred: starSkillIdSet.value.has(row.skillId),
                 important: row.important,
                 weeklyLevels,
                 cells,
@@ -202,6 +205,7 @@ const tableRows = computed<PlannerTableRow[]>(() => {
             const aMaxLevel = Math.max(...a.weeklyLevels);
             const bMaxLevel = Math.max(...b.weeklyLevels);
             return (
+                Number(b.starred) - Number(a.starred) ||
                 bMaxLevel - aMaxLevel ||
                 Number(b.important) - Number(a.important) ||
                 a.skillName.localeCompare(b.skillName)
@@ -280,6 +284,9 @@ const columns = computed<DataTableColumns<PlannerTableRow>>(() => [
                         class: "u-skill-icon",
                     }),
                     h("span", { class: "u-skill-name" }, row.skillName),
+                    row.starred
+                        ? h(resolveComponent("n-tag"), { size: "tiny", type: "warning", round: true }, { default: () => "置顶" })
+                        : null,
                 ]
             );
         },
