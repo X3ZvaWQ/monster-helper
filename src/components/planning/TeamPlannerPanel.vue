@@ -6,6 +6,7 @@
                     <n-text strong>组队规划</n-text>
                     <n-text depth="3">地图更新于 {{ mapUpdatedAt }}</n-text>
                     <n-text depth="3">未打角色 {{ availableRoleCount }} 个</n-text>
+                    <n-text depth="3">可用账号 {{ availableAccountCount }} 个</n-text>
                     <n-text depth="3">治疗候选 {{ healerRoleCount }} 个</n-text>
                 </n-flex>
                 <n-button type="primary" :loading="loading" @click="emit('refresh')">
@@ -31,6 +32,23 @@
                         @touchend="commitSortWeight"
                     />
                     <n-text depth="3" class="u-sort-label">收益优先</n-text>
+                </n-flex>
+                <n-flex align="center" :wrap="false">
+                    <n-radio-group v-model:value="planningMode" size="small">
+                        <n-radio-button value="recommend">推荐队伍</n-radio-button>
+                        <n-radio-button value="assign">分队编排</n-radio-button>
+                    </n-radio-group>
+                </n-flex>
+                <n-flex v-if="planningMode === 'assign'" align="center" :wrap="false">
+                    <n-text depth="3">最大组数</n-text>
+                    <n-input-number
+                        v-model:value="maxGroupCount"
+                        size="small"
+                        :min="1"
+                        :max="99"
+                        :step="1"
+                        class="u-max-group-count"
+                    />
                 </n-flex>
                 <n-flex align="center" :wrap="false">
                     <n-switch v-model:value="settingStore.planning.boostMissingNineWithTenBook" size="small" />
@@ -63,13 +81,28 @@
                             v-model:value="requiredRoleIdsModel"
                             multiple
                             clearable
+                            :disabled="planningMode === 'assign'"
                             :max-tag-count="2"
-                            placeholder="选择 1-2 个必须上场的角色"
+                            :placeholder="planningMode === 'assign' ? '分队编排模式不使用必须上场角色' : '选择 1-2 个必须上场的角色'"
                             :role-filter="isRequiredRoleSelectable"
                             class="u-required-role"
                         />
                     </n-flex>
-                    <n-text depth="3">当前限制：技能 {{ requirementText }}；角色 {{ requiredRoleText }}</n-text>
+                    <n-flex vertical class="m-required-roles">
+                        <n-text depth="3">不参与角色</n-text>
+                        <role-select
+                            v-model:value="excludedRoleIdsModel"
+                            multiple
+                            clearable
+                            max-tag-count="responsive"
+                            placeholder="手动排除本次不参与规划的角色"
+                            :role-filter="isExcludedRoleSelectable"
+                            class="u-required-role"
+                        />
+                    </n-flex>
+                    <n-text depth="3"
+                        >当前限制：技能 {{ requirementText }}；角色 {{ requiredRoleText }}；排除 {{ excludedRoleText }}</n-text
+                    >
                 </n-collapse-item>
             </n-collapse>
         </n-card>
@@ -87,11 +120,20 @@
                 description="没有符合条件的队伍，请检查未打角色、治疗候选和硬性限制"
             />
             <div v-else class="m-team-list">
+                <n-card v-if="planningMode === 'assign'" size="small" class="m-assign-summary">
+                    <n-flex align="center" :wrap="true">
+                        <n-tag type="primary">分组结果</n-tag>
+                        <n-text>共 {{ plannerWorker.results.value.length }} 组</n-text>
+                        <n-text depth="3">同一角色只会出现一次，同队内账号/账号分组互斥</n-text>
+                    </n-flex>
+                </n-card>
                 <team-planner-result-table
                     v-for="(result, index) in pagedResults"
                     :key="result.id"
                     :result="result"
                     :index="(resultPage - 1) * resultPageSize + index"
+                    :mode="planningMode"
+                    :star-skill-ids="settingStore.planning.starSkillIds || []"
                 />
                 <n-pagination
                     v-if="plannerWorker.results.value.length > resultPageSize"
@@ -109,8 +151,10 @@
 <script setup lang="ts">
 import SkillSelect from "@/components/common/SkillSelect.vue";
 import RoleSelect from "@/components/common/RoleSelect.vue";
+import AccountGroupDialog from "@/components/planning/AccountGroupDialog.vue";
+import SkillPreferenceDialog from "@/components/planning/SkillPreferenceDialog.vue";
 import TeamPlannerResultTable from "@/components/planning/TeamPlannerResultTable.vue";
-import { formatPlannerLevel } from "@/services/teamPlanner";
+import { formatPlannerLevel, TeamPlannerMode } from "@/services/teamPlanner";
 import { genderSkillReplaceMap, skillWeights } from "@/assets/data/game";
 import { useGameStore } from "@/store/game";
 import { useRoleStore } from "@/store/role";
@@ -144,8 +188,9 @@ const createRequirement = () => ({
     level: 9,
 });
 const plannerGenderSkillReplaceMap = Object.fromEntries(genderSkillReplaceMap.entries()) as Record<number, number>;
-const plannerSkillWeights = Object.fromEntries(skillWeights.entries()) as Record<number, number>;
 const sortWeightDraft = shallowRef(settingStore.planning.sortWeight ?? 0);
+const skillPreferenceDialog = useTemplateRef<InstanceType<typeof SkillPreferenceDialog>>("skillPreferenceDialog");
+const accountGroupDialog = useTemplateRef<InstanceType<typeof AccountGroupDialog>>("accountGroupDialog");
 
 const commitSortWeight = () => {
     settingStore.planning.sortWeight = sortWeightDraft.value;
@@ -158,14 +203,47 @@ watch(
     }
 );
 
+const planningMode = computed<TeamPlannerMode>({
+    get() {
+        return settingStore.planning.mode || "recommend";
+    },
+    set(value) {
+        settingStore.planning.mode = value;
+    },
+});
+
+const maxGroupCount = computed<number>({
+    get() {
+        return Math.min(Math.max(settingStore.planning.maxGroupCount || 25, 1), 99);
+    },
+    set(value) {
+        settingStore.planning.maxGroupCount = Math.min(Math.max(value || 1, 1), 99);
+    },
+});
+
+const plannerSkillWeights = computed<Record<number, number>>(() => {
+    const result = Object.fromEntries(skillWeights.entries()) as Record<number, number>;
+    for (const [skillId, weight] of Object.entries(settingStore.planning.customSkillWeights || {})) {
+        if (typeof weight !== "number" || Number.isNaN(weight)) continue;
+        result[Number(skillId)] = Math.min(Math.max(weight, 0.1), 100);
+    }
+    return result;
+});
+
 const plannerOptions = computed(() => ({
     topN: plannerResultLimit,
+    mode: planningMode.value,
+    maxGroupCount: maxGroupCount.value,
     sortWeight: settingStore.planning.sortWeight ?? 0,
     boostMissingNineWithTenBook: settingStore.planning.boostMissingNineWithTenBook,
     requirements: settingStore.planning.requirements,
     requiredRoleIds: settingStore.planning.requiredRoleIds || [],
+    excludedRoleIds: settingStore.planning.excludedRoleIds || [],
+    accountGroupsEnabled: settingStore.planning.accountGroupsEnabled,
+    accountGroups: settingStore.planning.accountGroups || [],
     genderSkillReplaceMap: plannerGenderSkillReplaceMap,
-    skillWeights: plannerSkillWeights,
+    skillWeights: plannerSkillWeights.value,
+    levelWeightMultipliers: settingStore.planning.levelWeightMultipliers || { 9: 1, 10: 2 },
 }));
 const resultPage = shallowRef(1);
 
@@ -182,6 +260,18 @@ const normalizeRequiredRoleIds = (roleIds: string[]) => {
     return result;
 };
 
+const normalizeExcludedRoleIds = (roleIds: string[]) => {
+    const requiredRoleIds = new Set(settingStore.planning.requiredRoleIds || []);
+    return Array.from(
+        new Set(
+            roleIds.filter((roleId) => {
+                const role = roleStore.getRoleById(roleId);
+                return Boolean(role && !role.cd && !requiredRoleIds.has(roleId));
+            })
+        )
+    );
+};
+
 const requiredRoleIdsModel = computed<string[]>({
     get() {
         return settingStore.planning.requiredRoleIds || [];
@@ -190,8 +280,17 @@ const requiredRoleIdsModel = computed<string[]>({
         settingStore.planning.requiredRoleIds = normalizeRequiredRoleIds(value);
     },
 });
+const excludedRoleIdsModel = computed<string[]>({
+    get() {
+        return settingStore.planning.excludedRoleIds || [];
+    },
+    set(value) {
+        settingStore.planning.excludedRoleIds = normalizeExcludedRoleIds(value);
+    },
+});
 const isRequiredRoleSelectable = (role: Role) => {
     if (role.cd) return false;
+    if (role.id && (settingStore.planning.excludedRoleIds || []).includes(role.id)) return false;
     const selectedRoleIds = requiredRoleIdsModel.value;
     if (role.id && selectedRoleIds.includes(role.id)) return true;
     if (selectedRoleIds.length >= 2) return false;
@@ -200,9 +299,18 @@ const isRequiredRoleSelectable = (role: Role) => {
     );
     return !selectedAccounts.has(role.account);
 };
+const isExcludedRoleSelectable = (role: Role) => {
+    if (role.cd) return false;
+    if (role.id && requiredRoleIdsModel.value.includes(role.id)) return false;
+    return true;
+};
 
-const availableRoleCount = computed(() => roleStore.roles.filter((role) => !role.cd).length);
-const healerRoleCount = computed(() => roleStore.roles.filter((role) => !role.cd && normalizeCanTreat(role)).length);
+const availableRoles = computed(() =>
+    roleStore.roles.filter((role) => !role.cd && !(settingStore.planning.excludedRoleIds || []).includes(role.id!))
+);
+const availableRoleCount = computed(() => availableRoles.value.length);
+const availableAccountCount = computed(() => new Set(availableRoles.value.map((role) => role.account)).size);
+const healerRoleCount = computed(() => availableRoles.value.filter((role) => normalizeCanTreat(role)).length);
 const pagedResults = computed(() => {
     const start = (resultPage.value - 1) * resultPageSize;
     return plannerWorker.results.value.slice(start, start + resultPageSize);
@@ -231,9 +339,21 @@ const requirementText = computed(() => {
         .join("、");
 });
 const requiredRoleText = computed(() => {
+    if (planningMode.value === "assign") return "分队编排模式不使用";
     if (!requiredRoleIdsModel.value.length) return "无";
     return requiredRoleIdsModel.value.map((roleId) => roleStore.getRoleById(roleId)?.name || "未知角色").join("、");
 });
+const excludedRoleText = computed(() => {
+    if (!excludedRoleIdsModel.value.length) return "无";
+    return excludedRoleIdsModel.value.map((roleId) => roleStore.getRoleById(roleId)?.name || "未知角色").join("、");
+});
+
+const openSkillPreference = () => {
+    skillPreferenceDialog.value?.open();
+};
+const openAccountGroup = () => {
+    accountGroupDialog.value?.open();
+};
 
 const isPlannerReady = computed(() => Boolean(props.map && Object.keys(gameStore.skillMap).length));
 const isBusy = computed(() => props.loading || plannerWorker.calculating.value);
@@ -265,11 +385,15 @@ watch(
 );
 
 watch(
-    () => [settingStore.planning.requiredRoleIds, roleStore.roles] as const,
+    () => [settingStore.planning.requiredRoleIds, settingStore.planning.excludedRoleIds, roleStore.roles] as const,
     () => {
         const normalized = normalizeRequiredRoleIds(settingStore.planning.requiredRoleIds || []);
         if (normalized.join("|") !== (settingStore.planning.requiredRoleIds || []).join("|")) {
             settingStore.planning.requiredRoleIds = normalized;
+        }
+        const normalizedExcluded = normalizeExcludedRoleIds(settingStore.planning.excludedRoleIds || []);
+        if (normalizedExcluded.join("|") !== (settingStore.planning.excludedRoleIds || []).join("|")) {
+            settingStore.planning.excludedRoleIds = normalizedExcluded;
         }
     },
     {
@@ -318,6 +442,10 @@ watch(
         flex-shrink: 0;
     }
 
+    .u-max-group-count {
+        width: 92px;
+    }
+
     .m-requirement-row {
         width: 100%;
     }
@@ -350,6 +478,10 @@ watch(
         display: flex;
         flex-direction: column;
         gap: 16px;
+    }
+
+    .m-assign-summary {
+        flex-shrink: 0;
     }
 
     .m-result-pagination {

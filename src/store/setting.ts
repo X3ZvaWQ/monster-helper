@@ -64,10 +64,18 @@ export const useSettingStore = defineStore("setting", {
             range: "last50" as "all" | "last50" | "last30",
         },
         planning: {
+            mode: "recommend" as "recommend" | "assign",
             sortWeight: 0,
+            maxGroupCount: 25,
             boostMissingNineWithTenBook: true,
             requirements: [] as { skillId: number | null; level: number | null }[],
             requiredRoleIds: [] as string[],
+            excludedRoleIds: [] as string[],
+            accountGroupsEnabled: false,
+            accountGroups: [] as { id: string; name: string; accounts: string[] }[],
+            starSkillIds: [] as number[],
+            customSkillWeights: {} as Record<number, number>,
+            levelWeightMultipliers: { 9: 1, 10: 2 } as Record<number, number>,
         },
     }),
     actions: {

@@ -16,6 +16,8 @@ export interface TeamPlannerAccountGroup {
 
 export interface TeamPlannerOptions {
     topN: number;
+    mode?: TeamPlannerMode;
+    maxGroupCount?: number;
     sortWeight: number;
     boostMissingNineWithTenBook: boolean;
     requirements: TeamPlannerRequirement[];
@@ -329,6 +331,25 @@ const matchRequiredRoles = (roles: Role[], requiredRoleIds: string[]) => {
     return validRequiredRoleIds.every((roleId) => teamRoleIds.has(roleId));
 };
 
+const getAvailableRoles = (roles: Role[], options: Pick<TeamPlannerOptions, "excludedRoleIds">) => {
+    const excludedRoleIds = new Set(options.excludedRoleIds || []);
+    return roles.filter((role) => role.id && !role.cd && !excludedRoleIds.has(role.id));
+};
+
+const createAccountLockKeyGetter = (options: Pick<TeamPlannerOptions, "accountGroupsEnabled" | "accountGroups">) => {
+    if (!options.accountGroupsEnabled) return (account: string) => account;
+    const accountGroupMap = new Map<string, string>();
+    for (const group of options.accountGroups || []) {
+        const accounts = Array.from(new Set((group.accounts || []).filter(Boolean)));
+        if (accounts.length < 2) continue;
+        const groupKey = `group:${group.id || accounts.join("|")}`;
+        for (const account of accounts) {
+            accountGroupMap.set(account, groupKey);
+        }
+    }
+    return (account: string) => accountGroupMap.get(account) || account;
+};
+
 const getTeamConflicts = (needs: TeamPlannerRoleNeed[], roles: Role[]) => {
     const roleMap = Object.fromEntries(roles.map((role) => [role.id!, role]));
     const groupedNeeds = needs.reduce<Record<string, TeamPlannerRoleNeed[]>>((result, need) => {
@@ -410,33 +431,42 @@ const compareTeams = (a: TeamPlannerResult, b: TeamPlannerResult, sortWeight: nu
     );
 };
 
-export const planTeams = (
+const createTeamCandidates = (
     roles: Role[],
     map: WeeklyMonsterMap | null,
     skillMap: Record<number, MonsterSkill>,
     options: TeamPlannerOptions
 ) => {
-    const availableRoles = roles.filter((role) => role.id && !role.cd);
+    const availableRoles = getAvailableRoles(roles, options);
     const roleNeeds = new Map<string, TeamPlannerRoleNeed[]>();
     for (const role of availableRoles) {
         roleNeeds.set(role.id!, getRolePlanningNeeds(role, map, skillMap, options));
     }
 
     const healerCandidates = availableRoles.filter((role) => normalizeCanTreat(role));
+    const getAccountLockKey = createAccountLockKeyGetter(options);
     const results: TeamPlannerResult[] = [];
     const seenTeamKeys = new Set<string>();
     for (const healer of healerCandidates) {
+        const healerAccountKey = getAccountLockKey(healer.account);
         for (let i = 0; i < availableRoles.length; i++) {
             const dpsA = availableRoles[i];
-            if (dpsA.id === healer.id || dpsA.account === healer.account) continue;
+            const dpsAAccountKey = getAccountLockKey(dpsA.account);
+            if (dpsA.id === healer.id || dpsAAccountKey === healerAccountKey) continue;
             for (let j = i + 1; j < availableRoles.length; j++) {
                 const dpsB = availableRoles[j];
-                if (dpsB.id === healer.id || dpsB.account === healer.account || dpsB.account === dpsA.account) continue;
+                const dpsBAccountKey = getAccountLockKey(dpsB.account);
+                if (
+                    dpsB.id === healer.id ||
+                    dpsBAccountKey === healerAccountKey ||
+                    dpsBAccountKey === dpsAAccountKey
+                )
+                    continue;
                 const teamRoles = [dpsA, dpsB, healer];
                 const teamKey = teamRoles.map((role) => role.id!).sort().join("-");
                 if (seenTeamKeys.has(teamKey)) continue;
                 seenTeamKeys.add(teamKey);
-                if (!matchRequiredRoles(teamRoles, options.requiredRoleIds || [])) continue;
+                if ((options.mode || "recommend") === "recommend" && !matchRequiredRoles(teamRoles, options.requiredRoleIds || [])) continue;
                 if (!matchRequirements(teamRoles, options.requirements, skillMap)) continue;
 
                 const roleReports: TeamPlannerRoleReport[] = [
@@ -481,7 +511,123 @@ export const planTeams = (
         }
     }
 
-    return results.sort((a, b) => compareTeams(a, b, options.sortWeight)).slice(0, Math.max(options.topN, 0));
+    return {
+        candidates: results.sort((a, b) => compareTeams(a, b, options.sortWeight)),
+        availableRoles,
+    };
+};
+
+const getAggregateScore = (teams: TeamPlannerResult[], sortWeight: number) => {
+    const benefitWeight = Math.min(Math.max(sortWeight, 0), 100) / 100;
+    const conflictWeight = 1 - benefitWeight;
+    const benefitScore = teams.reduce((sum, team) => sum + team.benefitScore, 0);
+    const conflictScore = teams.reduce((sum, team) => sum + team.conflictScore, 0);
+    const wastedDropScore = teams.reduce((sum, team) => sum + team.wastedDropScore, 0);
+    return (conflictScore + wastedDropScore) * conflictWeight - benefitScore * benefitWeight;
+};
+
+const compareTeamGroups = (a: TeamPlannerResult[], b: TeamPlannerResult[], sortWeight: number) => {
+    if (a.length !== b.length) return b.length - a.length;
+    const aScore = getAggregateScore(a, sortWeight);
+    const bScore = getAggregateScore(b, sortWeight);
+    const aConflict = a.reduce((sum, team) => sum + team.conflictScore, 0);
+    const bConflict = b.reduce((sum, team) => sum + team.conflictScore, 0);
+    const aWastedDrop = a.reduce((sum, team) => sum + team.wastedDropScore, 0);
+    const bWastedDrop = b.reduce((sum, team) => sum + team.wastedDropScore, 0);
+    const aBenefit = a.reduce((sum, team) => sum + team.benefitScore, 0);
+    const bBenefit = b.reduce((sum, team) => sum + team.benefitScore, 0);
+    return aScore - bScore || aConflict - bConflict || aWastedDrop - bWastedDrop || bBenefit - aBenefit;
+};
+
+const planAssignedTeams = (candidates: TeamPlannerResult[], availableRoles: Role[], options: TeamPlannerOptions) => {
+    const maxGroupCount = Math.min(Math.max(options.maxGroupCount || 1, 1), 99);
+    const candidateLimit = Math.min(Math.max(maxGroupCount * 240, 1200), 5000);
+    const limitedCandidates = candidates.slice(0, candidateLimit);
+    const deadline = performance.now() + 1200;
+    let best: TeamPlannerResult[] = [];
+    let stopped = false;
+
+    const chosen: TeamPlannerResult[] = [];
+    const usedRoleIds = new Set<string>();
+
+    const isBetter = (teams: TeamPlannerResult[]) => {
+        return compareTeamGroups(teams, best, options.sortWeight) < 0;
+    };
+
+    const updateBest = () => {
+        if (chosen.length && isBetter(chosen)) {
+            best = [...chosen];
+        }
+    };
+
+    const canUseTeam = (team: TeamPlannerResult) => {
+        return team.roles.every((role) => role.id && !usedRoleIds.has(role.id));
+    };
+
+    const addTeam = (team: TeamPlannerResult) => {
+        chosen.push(team);
+        for (const role of team.roles) {
+            usedRoleIds.add(role.id!);
+        }
+    };
+
+    const removeTeam = (team: TeamPlannerResult) => {
+        chosen.pop();
+        for (const role of team.roles) {
+            usedRoleIds.delete(role.id!);
+        }
+    };
+
+    for (const team of limitedCandidates) {
+        if (best.length >= maxGroupCount) break;
+        if (
+            team.roles.every(
+                (role) =>
+                    role.id &&
+                    !best.some((selected) =>
+                        selected.roles.some((selectedRole) => selectedRole.id === role.id)
+                    )
+            )
+        ) {
+            best.push(team);
+        }
+    }
+
+    const search = (start: number) => {
+        if (performance.now() > deadline) {
+            stopped = true;
+            return;
+        }
+        updateBest();
+        if (chosen.length >= maxGroupCount) return;
+        const remainingRoleSlots = Math.floor((availableRoles.length - usedRoleIds.size) / 3);
+        if (chosen.length + remainingRoleSlots < best.length) return;
+
+        for (let i = start; i < limitedCandidates.length; i++) {
+            if (stopped) return;
+            const team = limitedCandidates[i];
+            if (!canUseTeam(team)) continue;
+            addTeam(team);
+            search(i + 1);
+            removeTeam(team);
+        }
+    };
+
+    search(0);
+    return best.sort((a, b) => compareTeams(a, b, options.sortWeight));
+};
+
+export const planTeams = (
+    roles: Role[],
+    map: WeeklyMonsterMap | null,
+    skillMap: Record<number, MonsterSkill>,
+    options: TeamPlannerOptions
+) => {
+    const { candidates, availableRoles } = createTeamCandidates(roles, map, skillMap, options);
+    if ((options.mode || "recommend") === "assign") {
+        return planAssignedTeams(candidates, availableRoles, options);
+    }
+    return candidates.slice(0, Math.max(options.topN, 0));
 };
 
 export const formatPlannerLevel = (level: number) => {

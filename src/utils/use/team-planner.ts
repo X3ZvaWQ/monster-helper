@@ -20,8 +20,12 @@ interface TeamPlannerWorkerResponse {
     };
 }
 
-const clonePayload = <T>(payload: T): T => {
-    return JSON.parse(JSON.stringify(payload)) as T;
+const clonePayload = <T>(payload: T): T => JSON.parse(JSON.stringify(payload)) as T;
+
+const runWhenIdle = (callback: () => void) => {
+    const requestIdleCallback = window.requestIdleCallback;
+    if (requestIdleCallback) return requestIdleCallback(callback);
+    return window.setTimeout(callback, 120);
 };
 
 export const useTeamPlannerWorker = () => {
@@ -64,12 +68,15 @@ export const useTeamPlannerWorker = () => {
                 calculating.value = false;
                 terminateWorker();
             };
-            worker.postMessage({
-                id,
-                type: "plan",
-                ...clonePayload(payload),
-            } satisfies TeamPlannerWorkerRequest);
-        }, 80);
+            runWhenIdle(() => {
+                if (id !== requestId || !worker) return;
+                worker.postMessage({
+                    id,
+                    type: "plan",
+                    ...clonePayload(payload),
+                } satisfies TeamPlannerWorkerRequest);
+            });
+        }, 180);
     };
 
     const clear = () => {

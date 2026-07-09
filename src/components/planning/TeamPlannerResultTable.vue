@@ -4,7 +4,7 @@
             <n-flex justify="space-between" align="center" :wrap="true">
                 <n-flex align="center">
                     <n-tag type="primary" round>#{{ index + 1 }}</n-tag>
-                    <n-text strong>推荐队伍</n-text>
+                    <n-text strong>{{ mode === "assign" ? "分队" : "推荐队伍" }}</n-text>
                     <n-tag size="small" type="info">缺口 {{ result.needCount }} 个</n-tag>
                     <n-tag size="small" type="success">覆盖 {{ result.uniqueBossCount }} 个首领</n-tag>
                     <n-tag size="small" :type="result.conflicts.length ? 'warning' : 'success'">
@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { skillWeights } from "@/assets/data/game";
-import { formatPlannerLevel, TeamPlannerResult, TeamPlannerRoleNeed } from "@/services/teamPlanner";
+import { formatPlannerLevel, TeamPlannerMode, TeamPlannerResult, TeamPlannerRoleNeed } from "@/services/teamPlanner";
 import { useGameStore } from "@/store/game";
 import { useSettingStore } from "@/store/setting";
 import { iconLink, schoolIconLink } from "@/utils/game";
@@ -65,6 +65,8 @@ import { CSSProperties } from "vue";
 const props = defineProps<{
     result: TeamPlannerResult;
     index: number;
+    mode?: TeamPlannerMode;
+    starSkillIds?: number[];
 }>();
 
 interface PlannerTableCell {
