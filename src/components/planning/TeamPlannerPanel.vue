@@ -54,6 +54,18 @@
                     <n-switch v-model:value="settingStore.planning.boostMissingNineWithTenBook" size="small" />
                     <n-text depth="3">有十缺九提高权重</n-text>
                 </n-flex>
+                <n-button size="small" @click="openSkillPreference">
+                    <template #icon>
+                        <i-material-symbols:star-rounded />
+                    </template>
+                    技能偏好
+                </n-button>
+                <n-button size="small" @click="openAccountGroup">
+                    <template #icon>
+                        <i-material-symbols:account-tree-rounded />
+                    </template>
+                    账号分组
+                </n-button>
             </n-flex>
 
             <n-collapse class="m-requirements">
@@ -145,6 +157,8 @@
                 />
             </div>
         </n-spin>
+        <skill-preference-dialog ref="skillPreferenceDialog" />
+        <account-group-dialog ref="accountGroupDialog" />
     </div>
 </template>
 
