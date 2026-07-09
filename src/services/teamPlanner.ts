@@ -1,8 +1,17 @@
 import { normalizeCanTreat } from "@/utils/role";
+import { getBossDropSkillEntries } from "@/utils/boss-drop";
 
 export interface TeamPlannerRequirement {
     skillId: number | null;
     level: number | null;
+}
+
+export type TeamPlannerMode = "recommend" | "assign";
+
+export interface TeamPlannerAccountGroup {
+    id: string;
+    name: string;
+    accounts: string[];
 }
 
 export interface TeamPlannerOptions {
@@ -11,6 +20,10 @@ export interface TeamPlannerOptions {
     boostMissingNineWithTenBook: boolean;
     requirements: TeamPlannerRequirement[];
     requiredRoleIds: string[];
+    excludedRoleIds?: string[];
+    accountGroupsEnabled?: boolean;
+    accountGroups?: TeamPlannerAccountGroup[];
+    levelWeightMultipliers?: Record<number, number>;
     genderSkillReplaceMap?: Record<number, number>;
     skillWeights?: Record<number, number>;
 }
@@ -47,6 +60,15 @@ export interface TeamPlannerConflict {
     penalty: number;
 }
 
+export interface TeamPlannerWastedDrop {
+    skillId: number;
+    skillName: string;
+    targetLevel: number;
+    bosses: string[];
+    floors: number[];
+    penalty: number;
+}
+
 export interface TeamPlannerResult {
     id: string;
     roles: Role[];
@@ -58,6 +80,8 @@ export interface TeamPlannerResult {
     needCount: number;
     uniqueBossCount: number;
     conflicts: TeamPlannerConflict[];
+    wastedDrops: TeamPlannerWastedDrop[];
+    wastedDropScore: number;
 }
 
 const targetFloors = {
@@ -79,8 +103,16 @@ const plannerSkillLevelLabel = [
     "十重",
 ] as const;
 
-const getSkillWeight = (skillId: number, options: Pick<TeamPlannerOptions, "skillWeights">) => {
-    return options.skillWeights?.[skillId] ?? 1;
+const getLevelWeightMultiplier = (targetLevel: number, options: Pick<TeamPlannerOptions, "levelWeightMultipliers">) => {
+    return options.levelWeightMultipliers?.[targetLevel] ?? (targetLevel >= 10 ? 2 : 1);
+};
+
+const getSkillWeight = (
+    skillId: number,
+    targetLevel: number,
+    options: Pick<TeamPlannerOptions, "skillWeights" | "levelWeightMultipliers">
+) => {
+    return (options.skillWeights?.[skillId] ?? 1) * getLevelWeightMultiplier(targetLevel, options);
 };
 
 const getBookTargetLevel = (floor: number) => {
@@ -175,21 +207,29 @@ const getPlanningFloors = (map: WeeklyMonsterMap | null) => {
     return (map?.floors || []).filter((floor) => floor.floor >= targetFloors.min && floor.floor <= targetFloors.max && floor.boss);
 };
 
-const getBossDroppedSkills = (
+const getBossDroppedSkillEntries = (
     boss: MonsterBoss,
     skillMap: Record<number, MonsterSkill>,
     skillLookupMap: Record<number, MonsterSkill>
 ) => {
-    const skillById = new Map<number, MonsterSkill>();
+    const skillById = new Map<number, { skill: MonsterSkill; sourceBossName: string; isExtraDrop: boolean }>();
     for (const skillId of boss.skills || []) {
         const skill = skillLookupMap[skillId];
         if (skill) {
-            skillById.set(skill.id, skill);
+            skillById.set(skill.id, {
+                skill,
+                sourceBossName: boss.name,
+                isExtraDrop: false,
+            });
         }
     }
-    for (const skill of Object.values(skillMap)) {
-        if (skill.belongBoss?.includes(boss.name)) {
-            skillById.set(skill.id, skill);
+    for (const entry of getBossDropSkillEntries(boss, Object.values(skillMap))) {
+        if (!skillById.has(entry.skill.id)) {
+            skillById.set(entry.skill.id, {
+                skill: entry.skill,
+                sourceBossName: entry.sourceBossName,
+                isExtraDrop: entry.isExtraDrop,
+            });
         }
     }
     return Array.from(skillById.values());
@@ -199,7 +239,7 @@ export const getRolePlanningNeeds = (
     role: Role,
     map: WeeklyMonsterMap | null,
     skillMap: Record<number, MonsterSkill>,
-    options: Pick<TeamPlannerOptions, "boostMissingNineWithTenBook" | "genderSkillReplaceMap" | "skillWeights">
+    options: Pick<TeamPlannerOptions, "boostMissingNineWithTenBook" | "genderSkillReplaceMap" | "skillWeights" | "levelWeightMultipliers">
 ) => {
     const needMap = new Map<string, TeamPlannerRoleNeed>();
     const skillLookupMap = getSkillLookupMap(skillMap);
@@ -207,7 +247,8 @@ export const getRolePlanningNeeds = (
         const boss = floor.boss;
         if (!boss) continue;
         const targetLevel = getBookTargetLevel(floor.floor);
-        for (const droppedSkill of getBossDroppedSkills(boss, skillMap, skillLookupMap)) {
+        for (const dropEntry of getBossDroppedSkillEntries(boss, skillMap, skillLookupMap)) {
+            const droppedSkill = dropEntry.skill;
             const targetSkill = resolveDroppedSkillForRole(droppedSkill, role, skillMap, options);
             if (!targetSkill) continue;
             if (hasUsableBookLevel(role, targetSkill.id, targetLevel, skillMap, true, options)) continue;
@@ -220,7 +261,7 @@ export const getRolePlanningNeeds = (
             const key = `${targetSkill.id}-${targetLevel}`;
             const hasHigherBookBlocked =
                 targetLevel === 9 && effectiveLevel < 9 && hasUsableBookLevel(role, targetSkill.id, 10, skillMap, true, options);
-            const baseWeight = getSkillWeight(targetSkill.id, options);
+            const baseWeight = getSkillWeight(targetSkill.id, targetLevel, options);
             const weight =
                 options.boostMissingNineWithTenBook && hasHigherBookBlocked
                     ? baseWeight * missingNineWithTenBookMultiplier
@@ -304,14 +345,57 @@ const getTeamConflicts = (needs: TeamPlannerRoleNeed[], roles: Role[]) => {
     return conflicts.sort((a, b) => b.penalty - a.penalty);
 };
 
+const getTeamWastedDrops = (
+    needs: TeamPlannerRoleNeed[],
+    roles: Role[],
+    map: WeeklyMonsterMap | null,
+    skillMap: Record<number, MonsterSkill>,
+    options: Pick<TeamPlannerOptions, "genderSkillReplaceMap" | "skillWeights" | "levelWeightMultipliers">
+) => {
+    const fightingFloors = new Set(needs.flatMap((need) => need.floors));
+    const skillLookupMap = getSkillLookupMap(skillMap);
+    const wastedDropMap = new Map<string, TeamPlannerWastedDrop>();
+    for (const floor of getPlanningFloors(map)) {
+        if (!fightingFloors.has(floor.floor) || !floor.boss) continue;
+        const targetLevel = getBookTargetLevel(floor.floor);
+        for (const dropEntry of getBossDroppedSkillEntries(floor.boss, skillMap, skillLookupMap)) {
+            const hasUsefulRole = roles.some((role) => {
+                const targetSkill = resolveDroppedSkillForRole(dropEntry.skill, role, skillMap, options);
+                if (!targetSkill) return false;
+                if (hasUsableBookLevel(role, targetSkill.id, targetLevel, skillMap, true, options)) return false;
+                return getRoleEffectiveSkillLevel(role, targetSkill.id, skillMap, true, options) < targetLevel;
+            });
+            if (hasUsefulRole) continue;
+            const key = `${dropEntry.skill.id}-${targetLevel}`;
+            const penalty = getSkillWeight(dropEntry.skill.id, targetLevel, options);
+            const existing = wastedDropMap.get(key);
+            if (existing) {
+                if (!existing.bosses.includes(floor.boss.name)) existing.bosses.push(floor.boss.name);
+                if (!existing.floors.includes(floor.floor)) existing.floors.push(floor.floor);
+                continue;
+            }
+            wastedDropMap.set(key, {
+                skillId: dropEntry.skill.id,
+                skillName: dropEntry.skill.name,
+                targetLevel,
+                bosses: [floor.boss.name],
+                floors: [floor.floor],
+                penalty,
+            });
+        }
+    }
+    return Array.from(wastedDropMap.values()).sort((a, b) => b.penalty - a.penalty);
+};
+
 const compareTeams = (a: TeamPlannerResult, b: TeamPlannerResult, sortWeight: number) => {
     const benefitWeight = Math.min(Math.max(sortWeight, 0), 100) / 100;
     const conflictWeight = 1 - benefitWeight;
-    const aScore = a.conflictScore * conflictWeight - a.benefitScore * benefitWeight;
-    const bScore = b.conflictScore * conflictWeight - b.benefitScore * benefitWeight;
+    const aScore = (a.conflictScore + a.wastedDropScore) * conflictWeight - a.benefitScore * benefitWeight;
+    const bScore = (b.conflictScore + b.wastedDropScore) * conflictWeight - b.benefitScore * benefitWeight;
     return (
         aScore - bScore ||
         a.conflictScore - b.conflictScore ||
+        a.wastedDropScore - b.wastedDropScore ||
         b.benefitScore - a.benefitScore ||
         b.needCount - a.needCount ||
         a.id.localeCompare(b.id)
@@ -369,6 +453,7 @@ export const planTeams = (
                 ];
                 const needs = roleReports.flatMap((report) => report.needs);
                 const conflicts = getTeamConflicts(needs, teamRoles);
+                const wastedDrops = getTeamWastedDrops(needs, teamRoles, map, skillMap, options);
                 const uniqueBossCount = new Set(needs.flatMap((need) => need.bosses)).size;
                 results.push({
                     id: teamKey,
@@ -381,6 +466,8 @@ export const planTeams = (
                     needCount: needs.length,
                     uniqueBossCount,
                     conflicts,
+                    wastedDrops,
+                    wastedDropScore: wastedDrops.reduce((sum, drop) => sum + drop.penalty, 0),
                 });
             }
         }

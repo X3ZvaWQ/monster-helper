@@ -10,6 +10,17 @@
                     <n-tag size="small" :type="result.conflicts.length ? 'warning' : 'success'">
                         {{ result.conflicts.length ? `冲突 ${result.conflicts.length} 个` : "无冲突" }}
                     </n-tag>
+                    <n-tooltip v-if="result.wastedDrops.length">
+                        <template #trigger>
+                            <n-tag size="small" type="warning">烂书 {{ result.wastedDrops.length }} 个</n-tag>
+                        </template>
+                        <div class="m-wasted-drop-tooltip">
+                            <div v-for="drop in result.wastedDrops.slice(0, 8)" :key="`${drop.skillId}-${drop.targetLevel}`">
+                                {{ drop.bosses.join("、") }} 第 {{ drop.floors.join("、") }} 层：
+                                {{ drop.skillName }} {{ formatPlannerLevel(drop.targetLevel) }}
+                            </div>
+                        </div>
+                    </n-tooltip>
                 </n-flex>
             </n-flex>
         </template>
@@ -358,6 +369,14 @@ const tableScrollX = computed(() => 286 + roleColumns.value.length * 92);
         display: flex;
         align-items: center;
         gap: 8px;
+    }
+
+    :global(.m-wasted-drop-tooltip) {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-width: 360px;
+        font-size: 12px;
     }
 
     .u-school-icon {
