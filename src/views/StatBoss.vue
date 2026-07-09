@@ -180,6 +180,7 @@ import {
 import { useGameStore } from "@/store/game";
 import { useRoleStore } from "@/store/role";
 import { useSettingStore } from "@/store/setting";
+import { getBossDropSkillEntries } from "@/utils/boss-drop";
 import { iconLink } from "@/utils/game";
 import { getSearchKey, matchSearch } from "@/utils/search";
 import { chain, orderBy } from "lodash";
@@ -245,20 +246,24 @@ const threeSkillSummary = computed(() => {
 const weeklyDutyMap = computed(() => {
     const result = new Map<string, DutyInfo>();
     for (const floor of gameStore.monsterMap?.floors || []) {
-        const bossName = floor.boss?.name;
-        if (!bossName) continue;
-        const info = result.get(bossName) || {
-            floors: [],
-            hasEliteFloor: false,
-            minFloor: Number.MAX_SAFE_INTEGER,
-        };
-        info.floors.push(floor.floor);
-        info.hasEliteFloor ||= floor.floor % 10 === 0;
-        info.minFloor = Math.min(info.minFloor, floor.floor);
-        result.set(bossName, info);
+        const boss = floor.boss;
+        if (!boss) continue;
+        addDutyRecord(result, normalizeDutyBossName(boss.name), {
+            floor: floor.floor,
+            boss: boss.name,
+            isExtraDrop: false,
+        });
+        for (const sourceBossName of boss.extraDrop || []) {
+            addDutyRecord(result, normalizeDutyBossName(sourceBossName), {
+                floor: floor.floor,
+                boss: boss.name,
+                isExtraDrop: true,
+            });
+        }
     }
     for (const info of result.values()) {
         info.floors.sort((a, b) => b - a);
+        info.records.sort((a, b) => b.floor - a.floor || Number(a.isExtraDrop) - Number(b.isExtraDrop));
     }
     return result;
 });
@@ -280,7 +285,11 @@ const listData = computed<ListItem[]>(() => {
             boss,
             dutyInfo,
             roleRows,
-            searchKey: getSearchKey(boss, dutyInfo?.floors.join("") || ""),
+            searchKey: getSearchKey(
+                boss,
+                dutyInfo?.floors.join("") || "",
+                dutyInfo?.records.map((record) => record.boss).join("") || ""
+            ),
         });
     }
 
@@ -395,9 +404,7 @@ function createRoleRow(role: Role, boss: string): RoleBossRow | null {
 }
 
 function getBossSkills(boss: string, role: Role) {
-    const skills = gameStore.skills.filter(
-        (skill) => skill.belongBoss?.includes(boss) && (skill.gender === null || skill.gender === role.gender)
-    );
+    const skills = getBossDropSkillEntries({ name: boss }, gameStore.skills, role).map((entry) => entry.skill);
     const result: MonsterSkill[] = [];
     const queue = [...skills];
     while (queue.length > 0) {
@@ -417,19 +424,7 @@ function getBossSkills(boss: string, role: Role) {
 }
 
 function getDutyInfo(boss: string) {
-    if (boss !== "恶战") return weeklyDutyMap.value.get(boss) || null;
-
-    const matched = [...weeklyDutyMap.value.entries()]
-        .filter(([name]) => name.includes("恶战"))
-        .map(([, info]) => info);
-    if (matched.length === 0) return null;
-
-    const floors = matched.flatMap((info) => info.floors).sort((a, b) => b - a);
-    return {
-        floors,
-        hasEliteFloor: matched.some((info) => info.hasEliteFloor),
-        minFloor: Math.min(...floors),
-    };
+    return weeklyDutyMap.value.get(normalizeDutyBossName(boss)) || null;
 }
 
 function getDutySortGroup(item: ListItem) {
@@ -448,15 +443,50 @@ function hasDutyFloorAfter(dutyInfo: DutyInfo | null, floorLimit: number | null)
 function getDutyText(dutyInfo: DutyInfo | null) {
     if (!hasWeeklyDutyData.value) return "本周地图未加载";
     if (!dutyInfo) return "本周不上班";
-    const floors = getDisplayDutyFloors(dutyInfo);
-    if (floors.length === 0) return "本周值班低于显示层数";
-    return `本周第 ${floors.join("、")} 层上班`;
+    const records = getDisplayDutyRecords(dutyInfo);
+    if (records.length === 0) return "本周值班低于显示层数";
+    const directFloors = records.filter((record) => !record.isExtraDrop).map((record) => record.floor);
+    const extraDropText = getExtraDropDutyText(records.filter((record) => record.isExtraDrop));
+    const pieces: string[] = [];
+    if (directFloors.length) {
+        pieces.push(`第 ${directFloors.join("、")} 层上班`);
+    }
+    pieces.push(...extraDropText);
+    return `本周${pieces.join("；")}`;
 }
 
-function getDisplayDutyFloors(dutyInfo: DutyInfo) {
+function getDisplayDutyRecords(dutyInfo: DutyInfo) {
     const floorLimit = settingStore.statBoss.dutyRecordFloorLimit ?? 80;
-    if (!floorLimit) return dutyInfo.floors;
-    return dutyInfo.floors.filter((floor) => floor >= floorLimit);
+    if (!floorLimit) return dutyInfo.records;
+    return dutyInfo.records.filter((record) => record.floor >= floorLimit);
+}
+
+function getExtraDropDutyText(records: DutyRecord[]) {
+    const sourceMap = new Map<string, number[]>();
+    for (const record of records) {
+        const floors = sourceMap.get(record.boss) || [];
+        floors.push(record.floor);
+        sourceMap.set(record.boss, floors);
+    }
+    return [...sourceMap.entries()].map(([boss, floors]) => `第 ${floors.join("、")} 层由 ${boss} 额外掉落`);
+}
+
+function normalizeDutyBossName(boss: string) {
+    return boss.includes("恶战") ? "恶战" : boss;
+}
+
+function addDutyRecord(result: Map<string, DutyInfo>, boss: string, record: DutyRecord) {
+    const info = result.get(boss) || {
+        floors: [],
+        records: [],
+        hasEliteFloor: false,
+        minFloor: Number.MAX_SAFE_INTEGER,
+    };
+    info.floors.push(record.floor);
+    info.records.push(record);
+    info.hasEliteFloor ||= record.floor % 10 === 0;
+    info.minFloor = Math.min(info.minFloor, record.floor);
+    result.set(boss, info);
 }
 
 function getNextCollectText(row: RoleBossRow, boss: string) {
@@ -518,8 +548,15 @@ onMounted(async () => {
 
 interface DutyInfo {
     floors: number[];
+    records: DutyRecord[];
     hasEliteFloor: boolean;
     minFloor: number;
+}
+
+interface DutyRecord {
+    floor: number;
+    boss: string;
+    isExtraDrop: boolean;
 }
 
 interface ListItem {

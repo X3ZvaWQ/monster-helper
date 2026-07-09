@@ -2,7 +2,7 @@ import { effects as localMonsterEffects } from "@/assets/data/baizhan_effects";
 import { getMonsterBooks, getMonsterBosses, getMonsterEffects, getMonsterSkills, getWeeklyMonsterMap, MonsterBossRaw, MonsterSkillBook } from "@/services/game";
 import { distance } from "fastest-levenshtein";
 import { groupBy, keyBy } from "lodash";
-import { SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
+import { getBossExtraDrop, SkillLevelLabel, skillLevelLabel } from "@/assets/data/game";
 import { getCurrentVersion } from "@/utils/update";
 import { getJx3boxPost } from "@/services/jx3box";
 
@@ -95,14 +95,18 @@ export const useGameStore = defineStore("game", {
             const res = await getMonsterBosses();
             const bosses = (res.data || [])
                 .filter((boss) => boss.dwNpcID && boss.szName)
-                .map((boss) => ({
-                    id: boss.dwNpcID,
-                    name: boss.szName!,
-                    skills: boss.szSkill || [],
-                    avatar: getBossAvatar(boss),
-                    imagePath: boss.ImagePath,
-                    imageFrame: boss.ImageFrame,
-                }));
+                .map((boss) => {
+                    const extraDrop = getBossExtraDrop(boss.szName!);
+                    return {
+                        id: boss.dwNpcID,
+                        name: boss.szName!,
+                        skills: boss.szSkill || [],
+                        extraDrop,
+                        avatar: getBossAvatar(boss),
+                        imagePath: boss.ImagePath,
+                        imageFrame: boss.ImageFrame,
+                    };
+                });
             this.monsterBosses = bosses;
             this.monsterBossMap = keyBy(bosses, "id");
             this.lastFetchMonsterBossesAt = Date.now();

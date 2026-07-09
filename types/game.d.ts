@@ -13,6 +13,7 @@ interface MonsterBoss {
     id: number;
     name: string;
     skills: number[];
+    extraDrop?: string[];
     avatar: string;
     imagePath?: string;
     imageFrame?: number;

@@ -237,18 +237,21 @@ const _bossList = [
         alias: [],
         skillAlias: "程沐华·青年",
         coef: [0.8, 0.2],
+        extraDrop: ["程沐华"],
     },
     {
         name: "韦柔丝（困境）",
         alias: [],
         skillAlias: "韦柔丝·困境",
         coef: [0.2, 0.8],
+        extraDrop: ["韦柔丝"],
     },
     {
         name: "肖红",
         alias: [],
         skillAlias: "肖红",
         coef: [0.8, 0.2],
+        extraDrop: ["肖童"],
     },
     {
         name: "罗伊客",
@@ -267,6 +270,14 @@ export const bossList = computed(() => {
         searchKey: getSearchKey(boss.name, ...boss.alias),
     }));
 });
+
+export const getBossExtraDrop = (bossName: string) => {
+    const remoteBoss = bossList.value.find((boss) => boss.name === bossName);
+    if (remoteBoss && "extraDrop" in remoteBoss) return [...remoteBoss.extraDrop];
+    const localBoss = _bossList.find((boss) => boss.name === bossName);
+    if (localBoss && "extraDrop" in localBoss) return [...localBoss.extraDrop];
+    return undefined;
+};
 
 export type BossName = (typeof bossList.value)[number]["name"];
 
